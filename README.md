@@ -12,7 +12,7 @@ Proyecto final de curso publicado con GitHub Pages.
 
 URL pública esperada:
 
-- `https://manexlopez.github.io/ProyectoCursoInformatica/`
+https://manexlopez.github.io/ProyectoCursoInformatica/
 
 ## Estructura recomendada
 
