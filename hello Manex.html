@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Presentación de Proyecto - Entorno Integrado</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+
+    <style>
+        /* ==========================================================================
+           PALETA DE COLORES CÁLIDOS Y CONFIGURACIÓN EDITORIAL
+           ========================================================================== */
+        :root {
+            --bg-principal: #fbf9f6;      /* Arena claro / Crema sutil */
+            --bg-tarjeta: #ffffff;        /* Blanco puro para contraste */
+            --bg-interior: #f5f0e8;       /* Beige suave para zonas de código */
+            --texto-principal: #2a2421;   /* Café espresso muy oscuro */
+            --texto-secundario: #7a6f6a;  /* Taupe / Gris cálido */
+            --borde: #e8e1d7;             /* Líneas de unión suaves */
+            --acento: #b58960;            /* Bronce / Oro viejo */
+            --sombra: 0 4px 20px rgba(42, 36, 33, 0.03);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-principal);
+            color: var(--texto-principal);
+            font-family: 'Inter', sans-serif;
+            font-weight: 300;
+            line-height: 1.5;
+            padding: 40px;
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        /* ==========================================================================
+           HEADER MINIMALISTA
+           ========================================================================== */
+        header {
+            border-bottom: 1px solid var(--borde);
+            padding-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+        }
+
+        .header-titulo h1 {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 32px;
+            font-weight: 600;
+            letter-spacing: -0.5px;
+            color: var(--texto-principal);
+            line-height: 1.2;
+        }
+
+        .header-titulo p {
+            color: var(--texto-secundario);
+            font-size: 14px;
+            margin-top: 4px;
+            font-style: italic;
+        }
+
+        .header-meta {
+            text-align: right;
+            font-size: 12px;
+            color: var(--texto-secundario);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .header-meta span {
+            color: var(--acento);
+            font-weight: 500;
+        }
+
+        /* ==========================================================================
+           SECCIÓN PRINCIPAL: APLICACIÓN DETALLADA (IFRAME)
+           ========================================================================== */
+        .seccion-principal {
+            background-color: var(--bg-tarjeta);
+            border: 1px solid var(--borde);
+            border-radius: 4px;
+            padding: 20px;
+            box-shadow: var(--sombra);
+        }
+
+        .titulo-seccion {
+            display: flex;
+            align-items: baseline;
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+
+        .titulo-seccion h2 {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 22px;
+            font-weight: 600;
+            color: var(--texto-principal);
+        }
+
+        .sub-tag {
+            font-size: 11px;
+            color: var(--acento);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .contenedor-iframe-principal {
+            width: 100%;
+            height: 460px; /* Altura estilizada */
+            background-color: var(--bg-interior);
+            border: 1px solid var(--borde);
+            overflow: hidden;
+        }
+
+        .iframe-principal {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        /* ==========================================================================
+           SECCIÓN INFERIOR: COMPRIMIDA EN 2X2 REQUERIDO
+           ========================================================================== */
+        .grid-2x2 {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px; /* Espaciado más ajustado */
+        }
+
+        .tarjeta-mini-app {
+            background-color: var(--bg-tarjeta);
+            border: 1px solid var(--borde);
+            border-radius: 4px;
+            padding: 12px 16px;
+            box-shadow: var(--sombra);
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .header-mini-app {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-mini-app h3 {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        /* Contenedores de las sub-apps optimizados para ocupar poco espacio */
+        .contenedor-codigo-satelite {
+            width: 100%;
+            height: 130px; /* Súper comprimido para conservar espacio vertical */
+            background-color: var(--bg-interior);
+            border: 1px solid var(--borde);
+            overflow: auto;
+            padding: 10px;
+        }
+
+        .placeholder-texto {
+            color: var(--texto-secundario);
+            font-size: 12px;
+            text-align: center;
+            font-style: italic;
+            margin-top: 45px;
+        }
+
+        footer {
+            text-align: center;
+            font-size: 11px;
+            color: var(--texto-secundario);
+            border-top: 1px solid var(--borde);
+            padding-top: 15px;
+            margin-top: 10px;
+        }
+
+        @media (max-width: 850px) {
+            .grid-2x2 { grid-template-columns: 1fr; }
+            body { padding: 20px; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="header-titulo">
+            <h1>Proyecto Integrado de Desarrollo</h1>
+            <p>Sustentación Académica de Módulos Web e Interfaz Core</p>
+        </div>
+        <div class="header-meta">
+            Presentación: <span>Ecosistema Digital</span>
+        </div>
+    </header>
+
+    <main class="seccion-principal">
+        <div class="titulo-seccion">
+            <h2>Módulo Principal Detallado</h2>
+            <span class="sub-tag">— Visualización de Núcleo (Iframe)</span>
+        </div>
+        
+        <div class="contenedor-iframe-principal">
+            <iframe class="iframe-principal" id="app-principal" src="about:blank" title="Aplicación Detallada"></iframe>
+        </div>
+    </main>
+
+    <section class="grid-2x2">
+        
+        <article class="tarjeta-mini-app">
+            <div class="header-mini-app">
+                <h3>01. Aplicación Satélite</h3>
+                <span class="sub-tag">Sub-app 1</span>
+            </div>
+            <div class="contenedor-codigo-satelite" id="satelite-1">
+                <div class="placeholder-texto">Adopción de código preparada.</div>
+            </div>
+        </article>
+
+        <article class="tarjeta-mini-app">
+            <div class="header-mini-app">
+                <h3>02. Aplicación Satélite</h3>
+                <span class="sub-tag">Sub-app 2</span>
+            </div>
+            <div class="contenedor-codigo-satelite" id="satelite-2">
+                <div class="placeholder-texto">Adopción de código preparada.</div>
+            </div>
+        </article>
+
+        <article class="tarjeta-mini-app">
+            <div class="header-mini-app">
+                <h3>03. Aplicación Satélite</h3>
+                <span class="sub-tag">Sub-app 3</span>
+            </div>
+            <div class="contenedor-codigo-satelite" id="satelite-3">
+                <div class="placeholder-texto">Adopción de código preparada.</div>
+            </div>
+        </article>
+
+        <article class="tarjeta-mini-app">
+            <div class="header-mini-app">
+                <h3>04. Aplicación Satélite</h3>
+                <span class="sub-tag">Sub-app 4</span>
+            </div>
+            <div class="contenedor-codigo-satelite" id="satelite-4">
+                <div class="placeholder-texto">Adopción de código preparada.</div>
+            </div>
+        </article>
+
+    </section>
+
+    <footer>
+        <p>Ecosistema Modular. Proyecto Académico Finalizado.</p>
+    </footer>
+
+</body>
+</html>
