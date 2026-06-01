@@ -263,7 +263,7 @@
     </main>
 
     <section class="grid-2x2" id="grid-satelites"></section>
-    <p id="nota-satelites" class="sub-tag" aria-live="polite"></p>
+    <p id="nota-satelites" class="sub-tag" role="status" aria-live="polite"></p>
 
     <footer>
         <p>Ecosistema Modular. Proyecto Académico Finalizado.</p>
@@ -282,6 +282,7 @@
         const iframePrincipal = document.getElementById('app-principal');
         const enlacePrincipal = document.getElementById('abrir-principal');
         const gridSatelites = document.getElementById('grid-satelites');
+        const MAX_SATELITES = 4;
         let proyectoPrincipalId = proyectos[0].id;
 
         function renderSelector() {
@@ -327,14 +328,14 @@
         function renderSatelites() {
             gridSatelites.innerHTML = '';
             const todosLosSatelites = proyectos.filter((p) => p.id !== proyectoPrincipalId);
-            const satelites = todosLosSatelites.slice(0, 4);
+            const satelites = todosLosSatelites.slice(0, MAX_SATELITES);
             satelites.forEach((proyecto) => {
                 gridSatelites.appendChild(crearTarjetaSatelite(proyecto));
             });
             const ocultos = todosLosSatelites.length - satelites.length;
             const nota = document.getElementById('nota-satelites');
             nota.textContent = ocultos > 0
-                ? `Se muestran 4 proyectos satélite. Hay ${ocultos} proyecto(s) adicional(es) registrado(s).`
+                ? `Se muestran ${MAX_SATELITES} proyectos satélite. Hay ${ocultos} proyecto(s) adicional(es) registrado(s).`
                 : '';
         }
 
