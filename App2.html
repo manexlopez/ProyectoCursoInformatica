@@ -1,0 +1,485 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>App 2: Expansor de Propiedades y Exergía Mecánica</title>
+    
+    <!-- Tailwind CSS para estilos rápidos y responsivos -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js para visualización de datos -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        /* Estilos personalizados sutiles */
+        body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(229, 231, 235, 0.5);
+        }
+        
+        /* Ocultar barra de desplazamiento para estética limpia, pero permitir scroll */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen p-4 md:p-8">
+
+    <div class="max-w-7xl mx-auto space-y-6">
+        <!-- Cabecera -->
+        <header class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div>
+                <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">App 2: Propiedades Reales y Exergía</h1>
+                <p class="text-slate-500 mt-1">Análisis riguroso transitorio de propiedades termofísicas (NASA/Sutherland) y exergía mecánica.</p>
+            </div>
+            <button id="btn-save" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-5 rounded-lg transition-colors shadow-sm hidden flex-shrink-0">
+                <span class="flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>
+                    Guardar y Actualizar BD
+                </span>
+            </button>
+        </header>
+
+        <!-- Mensaje de Advertencia (Si no hay datos de la App 1) -->
+        <div id="alert-no-data" class="bg-amber-50 border-l-4 border-amber-500 p-6 rounded-r-lg shadow-sm hidden">
+            <div class="flex items-start">
+                <div class="flex-shrink-0">
+                    <svg class="h-6 w-6 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                    </svg>
+                </div>
+                <div class="ml-3">
+                    <h3 class="text-lg font-medium text-amber-800">No se encontraron trayectorias (App 1)</h3>
+                    <p class="mt-2 text-sm text-amber-700">
+                        Por favor, define primero las corrientes en la App 1 para que esta aplicación pueda importar los perfiles de temperatura en el <code>localStorage</code>.
+                    </p>
+                    <div class="mt-4">
+                        <button onclick="loadMockData()" class="bg-amber-600 hover:bg-amber-700 text-white font-medium py-1.5 px-4 rounded transition-colors text-sm">
+                            Cargar Datos de Prueba (Simular App 1)
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Contenido Principal -->
+        <div id="main-content" class="grid grid-cols-1 lg:grid-cols-3 gap-6 hidden">
+            
+            <!-- Columna Izquierda: Controles por Corriente -->
+            <div class="lg:col-span-1 space-y-4" id="streams-container">
+                <h2 class="text-xl font-bold text-slate-800 mb-2">Configuración de Corrientes</h2>
+                <!-- Los controles de las corrientes se generarán aquí mediante JS -->
+            </div>
+
+            <!-- Columna Derecha: Gráficos -->
+            <div class="lg:col-span-2 space-y-6">
+                <!-- Gráfico de Calor Específico (Cp) -->
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
+                    <h3 class="text-lg font-bold text-slate-800 mb-4">Evolución del Calor Específico (Cp)</h3>
+                    <div class="relative h-[300px] w-full">
+                        <canvas id="chart-cp"></canvas>
+                    </div>
+                </div>
+                
+                <!-- Gráfico de Exergía Mecánica -->
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
+                    <h3 class="text-lg font-bold text-slate-800 mb-4">Exergía Mecánica Disponible (ExPAnD)</h3>
+                    <div class="relative h-[300px] w-full">
+                        <canvas id="chart-exergy"></canvas>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Toast de Notificación -->
+    <div id="toast" class="fixed bottom-5 right-5 bg-emerald-600 text-white px-6 py-3 rounded-lg shadow-lg transform transition-all duration-300 translate-y-20 opacity-0 flex items-center gap-3">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+        <span class="font-medium">¡Datos enriquecidos guardados correctamente!</span>
+    </div>
+
+    <script>
+        /**
+         * LÓGICA DEL MOTOR JAVASCRIPT Y CÁLCULOS
+         */
+
+        // Constantes Físicas Universales
+        const T0 = 298.15; // K (Temperatura de referencia: 25°C)
+        const P0 = 101325; // Pa (Presión de referencia: 1 atm)
+        
+        // --- 1. Modelos Termofísicos para Gas Hidrógeno (H2) ---
+        const R_SPEC_H2 = 4124; // Constante del gas para H2 (J/kg·K)
+
+        // Cp de H2 (Polinomio NASA 7-coeff, GRI-Mech 3.0)
+        function getCp_H2(T_K) {
+            const a1 = 3.298;
+            const a2 = 8.249e-4;
+            const a3 = -8.143e-7;
+            const a4 = -9.475e-11;
+            const a5 = 4.134e-14;
+            
+            // Limitamos T entre 200 y 1000K para evitar divergencia extrema de polinomios, 
+            // aunque el modelo lo evaluará de todas formas.
+            const T = Math.max(200, Math.min(T_K, 1500)); 
+            
+            const cp_R = a1 + (a2 * T) + (a3 * Math.pow(T, 2)) + (a4 * Math.pow(T, 3)) + (a5 * Math.pow(T, 4));
+            return cp_R * R_SPEC_H2; // J/kg·K
+        }
+
+        // Densidad de H2 (Gas Ideal Corregido)
+        function getRho_H2(T_K, P_Pa) {
+            const P_bar = P_Pa / 100000;
+            const Z = 1 + (0.00064 * P_bar * (300 / T_K)); // Aproximación lineal del factor de compresibilidad Z
+            return P_Pa / (Z * R_SPEC_H2 * T_K); // kg/m³
+        }
+
+        // Viscosidad Dinámica de H2 (Ajuste Sutherland)
+        function getMu_H2(T_K) {
+            const T_ref = 293.85; // K
+            const mu_ref = 8.76e-6; // Pa·s
+            const Cs = 72; // K
+            return mu_ref * Math.pow(T_K / T_ref, 1.5) * ((T_ref + Cs) / (T_K + Cs)); // Pa·s
+        }
+
+        // --- 2. Modelos Termofísicos para Agua Líquida ---
+        function getCp_Water(T_K) { return 4180; } // J/kg·K (Aproximación constante de baja sensibilidad)
+        function getRho_Water(T_K, P_Pa) { return 1000; } // kg/m³
+        function getMu_Water(T_K) { return 8.9e-4; } // Pa·s
+
+        // --- Variables Globales de Estado ---
+        let appData = null; // Datos cargados de localStorage
+        let streamConfigs = {}; // Configuraciones seleccionadas por el usuario por corriente
+        let processedData = null; // Datos calculados y listos para exportar
+        
+        let chartCp = null;
+        let chartExergy = null;
+        
+        // Paleta de colores para gráficos
+        const chartColors = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6'];
+
+        // --- Inicialización ---
+        window.addEventListener('DOMContentLoaded', () => {
+            initApp();
+            
+            document.getElementById('btn-save').addEventListener('click', saveEnrichedData);
+        });
+
+        function initApp() {
+            const storedData = localStorage.getItem('suite_thermal_trayectorias');
+            
+            if (!storedData) {
+                document.getElementById('alert-no-data').classList.remove('hidden');
+                return;
+            }
+
+            try {
+                appData = JSON.parse(storedData);
+                if (!appData.streams || !appData.time) throw new Error("Formato de datos inválido");
+                
+                document.getElementById('main-content').classList.remove('hidden');
+                document.getElementById('btn-save').classList.remove('hidden');
+                
+                buildControls();
+                initCharts();
+                processPhysics();
+                
+            } catch (error) {
+                console.error("Error al analizar datos de la App 1:", error);
+                alert("Los datos almacenados están corruptos. Por favor, regeneralos en la App 1.");
+            }
+        }
+
+        // --- Construcción de Interfaz de Usuario ---
+        function buildControls() {
+            const container = document.getElementById('streams-container');
+            container.innerHTML = '<h2 class="text-xl font-bold text-slate-800 mb-2">Configuración de Corrientes</h2>';
+
+            appData.streams.forEach((stream, index) => {
+                // Inicializar configuración por defecto
+                streamConfigs[stream.id] = {
+                    fluid: index === 0 ? 'H2' : 'Water', // Alternar por defecto
+                    maxPressure: 100, // bar
+                    isDynamic: false
+                };
+
+                const cardHtml = `
+                    <div class="glass-panel p-5 rounded-xl transition-all hover:shadow-md">
+                        <div class="flex justify-between items-center mb-3">
+                            <h3 class="font-bold text-slate-700 flex items-center gap-2">
+                                <span class="w-3 h-3 rounded-full" style="background-color: ${chartColors[index % chartColors.length]}"></span>
+                                ${stream.name || stream.id}
+                            </h3>
+                            <span class="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded-full font-mono">mCp: ${stream.mCp_base}</span>
+                        </div>
+                        
+                        <div class="space-y-4">
+                            <!-- Selector de Fluido -->
+                            <div>
+                                <label class="block text-sm font-medium text-slate-600 mb-1">Fluido Real</label>
+                                <select id="fluid-${stream.id}" onchange="updateConfig('${stream.id}', 'fluid', this.value)" class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                    <option value="H2" ${streamConfigs[stream.id].fluid === 'H2' ? 'selected' : ''}>Gas Hidrógeno (H2)</option>
+                                    <option value="Water" ${streamConfigs[stream.id].fluid === 'Water' ? 'selected' : ''}>Agua Líquida</option>
+                                </select>
+                            </div>
+
+                            <!-- Control de Presión -->
+                            <div>
+                                <div class="flex justify-between items-center mb-1">
+                                    <label class="block text-sm font-medium text-slate-600">Presión (bar)</label>
+                                    <span id="p-val-${stream.id}" class="text-sm font-bold text-blue-600 w-12 text-right">${streamConfigs[stream.id].maxPressure}</span>
+                                </div>
+                                <input type="range" id="p-slider-${stream.id}" min="1" max="700" value="${streamConfigs[stream.id].maxPressure}" 
+                                    oninput="document.getElementById('p-val-${stream.id}').innerText=this.value; updateConfig('${stream.id}', 'maxPressure', this.value)"
+                                    class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
+                            </div>
+
+                            <!-- Checkbox Presión Dinámica -->
+                            <div class="flex items-center mt-2">
+                                <input id="dyn-${stream.id}" type="checkbox" onchange="updateConfig('${stream.id}', 'isDynamic', this.checked)" ${streamConfigs[stream.id].isDynamic ? 'checked' : ''} class="w-4 h-4 text-blue-600 bg-slate-100 border-slate-300 rounded focus:ring-blue-500 cursor-pointer">
+                                <label for="dyn-${stream.id}" class="ml-2 text-sm text-slate-600 cursor-pointer select-none">Presión dinámica (Vaciado a 1 atm)</label>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                container.insertAdjacentHTML('beforeend', cardHtml);
+            });
+        }
+
+        // Manejador de actualizaciones desde la UI
+        function updateConfig(streamId, key, value) {
+            if (key === 'maxPressure') value = parseFloat(value);
+            streamConfigs[streamId][key] = value;
+            processPhysics(); // Recalcular todo en tiempo real
+        }
+
+        // --- Núcleo de Procesamiento Físico ---
+        function processPhysics() {
+            // Clonamos estructura base para enriquecerla
+            processedData = JSON.parse(JSON.stringify(appData));
+            
+            const timeArray = processedData.time;
+            const N = timeArray.length;
+
+            processedData.streams.forEach(stream => {
+                const config = streamConfigs[stream.id];
+                const T_profile = stream.temp_profile;
+                
+                // Preparar vectores de salida
+                const Cp_dinamico = new Float32Array(N);
+                const rho_dinamica = new Float32Array(N);
+                const mu_dinamica = new Float32Array(N);
+                const P_perfil = new Float32Array(N);
+                const Ex_P_perfil = new Float32Array(N);
+                const Q_obs_real = new Float32Array(N);
+
+                const maxP_Pa = config.maxPressure * 100000;
+                
+                // Determinación del Volumen Base V_base
+                // Asumimos un volumen constante basado en el estado inicial para encajar con el mCp_base de la App 1.
+                const T0_K = T_profile[0] + 273.15;
+                const P0_stream = maxP_Pa; // Presión inicial
+                
+                let Cp0, rho0;
+                if (config.fluid === 'H2') {
+                    Cp0 = getCp_H2(T0_K);
+                    rho0 = getRho_H2(T0_K, P0_stream);
+                } else {
+                    Cp0 = getCp_Water(T0_K);
+                    rho0 = getRho_Water(T0_K, P0_stream);
+                }
+                
+                const m0 = stream.mCp_base / Cp0; // Masa inicial kg
+                const V_base = m0 / rho0; // m³
+
+                // Bucle de integración transitoria
+                for (let k = 0; k < N; k++) {
+                    const t = timeArray[k];
+                    const T_K = T_profile[k] + 273.15;
+                    
+                    // Calcular Perfil de Presión
+                    let P_Pa = maxP_Pa;
+                    if (config.isDynamic) {
+                        // Decaimiento lineal de maxP_Pa a 1 atm (101325 Pa)
+                        const totalTime = timeArray[N - 1];
+                        const progress = t / (totalTime > 0 ? totalTime : 1);
+                        P_Pa = maxP_Pa - ((maxP_Pa - P0) * progress);
+                    }
+                    P_perfil[k] = P_Pa / 100000; // Guardamos en bar para visualización general
+                    
+                    // Calcular Propiedades Termofísicas
+                    let Cp, rho, mu, exergy_kJ;
+                    
+                    if (config.fluid === 'H2') {
+                        Cp = getCp_H2(T_K);
+                        rho = getRho_H2(T_K, P_Pa);
+                        mu = getMu_H2(T_K);
+                        
+                        // Exergía Mecánica (Metodología Aspelund-Berstad ExPAnD para gases)
+                        const mass = rho * V_base;
+                        // Ex_P = m * R * T0 * ln(P/P0) -> Resultado en J, convertimos a kJ
+                        exergy_kJ = (mass * R_SPEC_H2 * T0 * Math.log(P_Pa / P0)) / 1000; 
+                    } else {
+                        Cp = getCp_Water(T_K);
+                        rho = getRho_Water(T_K, P_Pa);
+                        mu = getMu_Water(T_K);
+                        
+                        // Exergía mecánica flujo incompresible: V * (P - P0) = m/rho * (P-P0)
+                        const mass = rho * V_base;
+                        exergy_kJ = (mass * (P_Pa - P0) / rho) / 1000; // en kJ
+                    }
+
+                    // Guardar propiedades
+                    Cp_dinamico[k] = Cp;
+                    rho_dinamica[k] = rho;
+                    mu_dinamica[k] = mu;
+                    
+                    // Límite inferior de exergía a 0 (no consideramos vacío)
+                    Ex_P_perfil[k] = Math.max(0, exergy_kJ); 
+                    
+                    // Cálculo de Calor Real (Q_obs,real)
+                    const mass_t = rho * V_base;
+                    let dTdt = 0;
+                    if (k < N - 1) {
+                        const dt = timeArray[k+1] - timeArray[k];
+                        if(dt > 0) dTdt = (T_profile[k+1] - T_profile[k]) / dt;
+                    } else if (k > 0) {
+                         // Usar derivada anterior para el último punto
+                        const dt = timeArray[k] - timeArray[k-1];
+                        if(dt > 0) dTdt = (T_profile[k] - T_profile[k-1]) / dt;
+                    }
+                    
+                    // Q = m * Cp * dT/dt (Watts)
+                    Q_obs_real[k] = mass_t * Cp * dTdt;
+                }
+
+                // Asignar al objeto exportable (convertimos TypedArrays a Arrays normales para JSON.stringify)
+                stream.fluid = config.fluid;
+                stream.Cp_dinamico = Array.from(Cp_dinamico);
+                stream.rho_dinamica = Array.from(rho_dinamica);
+                stream.mu_dinamica = Array.from(mu_dinamica);
+                stream.P_perfil_bar = Array.from(P_perfil);
+                stream.Ex_P_perfil = Array.from(Ex_P_perfil);
+                stream.Q_obs_real = Array.from(Q_obs_real);
+            });
+
+            updateCharts();
+        }
+
+        // --- Gráficos (Chart.js) ---
+        function initCharts() {
+            const commonOptions = {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: { mode: 'index', intersect: false },
+                plugins: {
+                    legend: { position: 'bottom', labels: { usePointStyle: true, boxWidth: 6 } }
+                },
+                elements: { point: { radius: 0, hitRadius: 10, hoverRadius: 4 }, line: { tension: 0.3, borderWidth: 2 } }
+            };
+
+            const ctxCp = document.getElementById('chart-cp').getContext('2d');
+            chartCp = new Chart(ctxCp, {
+                type: 'line',
+                data: { labels: [], datasets: [] },
+                options: {
+                    ...commonOptions,
+                    scales: {
+                        x: { title: { display: true, text: 'Tiempo (s)' } },
+                        y: { title: { display: true, text: 'Calor Específico (J/kg·K)' } }
+                    }
+                }
+            });
+
+            const ctxEx = document.getElementById('chart-exergy').getContext('2d');
+            chartExergy = new Chart(ctxEx, {
+                type: 'line',
+                data: { labels: [], datasets: [] },
+                options: {
+                    ...commonOptions,
+                    scales: {
+                        x: { title: { display: true, text: 'Tiempo (s)' } },
+                        y: { title: { display: true, text: 'Exergía Mecánica (kJ)' }, beginAtZero: true }
+                    }
+                }
+            });
+        }
+
+        function updateCharts() {
+            if (!processedData || !chartCp || !chartExergy) return;
+
+            const labels = processedData.time;
+            
+            // Actualizar Chart Cp
+            chartCp.data.labels = labels;
+            chartCp.data.datasets = processedData.streams.map((stream, i) => ({
+                label: `${stream.name || stream.id} (${stream.fluid})`,
+                data: stream.Cp_dinamico,
+                borderColor: chartColors[i % chartColors.length],
+                backgroundColor: chartColors[i % chartColors.length],
+            }));
+            chartCp.update();
+
+            // Actualizar Chart Exergía
+            chartExergy.data.labels = labels;
+            chartExergy.data.datasets = processedData.streams.map((stream, i) => ({
+                label: stream.name || stream.id,
+                data: stream.Ex_P_perfil,
+                borderColor: chartColors[i % chartColors.length],
+                backgroundColor: chartColors[i % chartColors.length],
+                fill: true,
+                backgroundColor: chartColors[i % chartColors.length] + '20' // 20 hex opacity
+            }));
+            chartExergy.update();
+        }
+
+        // --- Exportación y Persistencia ---
+        function saveEnrichedData() {
+            if (!processedData) return;
+            
+            try {
+                localStorage.setItem('suite_thermal_data_enriched', JSON.stringify(processedData));
+                
+                // Mostrar Toast de éxito
+                const toast = document.getElementById('toast');
+                toast.classList.remove('translate-y-20', 'opacity-0');
+                
+                setTimeout(() => {
+                    toast.classList.add('translate-y-20', 'opacity-0');
+                }, 3000);
+                
+                console.log("Datos exportados a 'suite_thermal_data_enriched'");
+            } catch (error) {
+                console.error("Error al guardar:", error);
+                alert("Error al intentar guardar los datos en localStorage.");
+            }
+        }
+
+        // --- Utilidad para Pruebas (Mock Data) ---
+        function loadMockData() {
+            const time = Array.from({length: 101}, (_, i) => i * 10); // 0 a 1000 segundos
+            
+            // Perfiles de temperatura simulados (°C)
+            const T1 = time.map(t => 80 - (t * 0.05)); // Enfría
+            const T2 = time.map(t => 20 + (t * 0.02)); // Calienta un poco
+            const T3 = time.map(t => -40 + (t * 0.1)); // Calienta rápido (ej. H2 criogénico)
+            
+            const mock = {
+                time: time,
+                streams: [
+                    { id: 'S1', name: 'Circuito Primario', mCp_base: 50000, temp_profile: T1 },
+                    { id: 'S2', name: 'Refrigeración Secundaria', mCp_base: 15000, temp_profile: T2 },
+                    { id: 'S3', name: 'Tanque H2', mCp_base: 5000, temp_profile: T3 }
+                ]
+            };
+            
+            localStorage.setItem('suite_thermal_trayectorias', JSON.stringify(mock));
+            location.reload();
+        }
+    </script>
+</body>
+</html>
