@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>App 4: Configurador de Discretización Temporal y Límites de Seguridad</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 16px;
+            width: 16px;
+            border-radius: 50%;
+            background: #2563eb;
+            cursor: pointer;
+            margin-top: -6px;
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 4px;
+            cursor: pointer;
+            background: #cbd5e1;
+            border-radius: 2px;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
+
+    <!-- Navbar -->
+    <nav class="bg-slate-900 text-white p-4 shadow-md flex items-center justify-between z-10">
+        <div class="flex items-center gap-3">
+            <i class="ph ph-sliders text-2xl text-blue-400"></i>
+            <h1 class="text-xl font-bold tracking-tight">App 4: Discretización Temporal y Seguridad</h1>
+        </div>
+        <div class="text-sm text-slate-400 flex gap-4">
+            <span class="flex items-center gap-1"><i class="ph ph-cube"></i> Sec. 9.1</span>
+            <span class="flex items-center gap-1"><i class="ph ph-warning-circle"></i> Sec. 8.2</span>
+        </div>
+    </nav>
+
+    <!-- PANTALLA DE ERROR / FALTA DE DATOS -->
+    <div id="error-screen" class="hidden flex-grow flex flex-col items-center justify-center p-6 text-center">
+        <i class="ph ph-warning text-6xl text-amber-500 mb-4"></i>
+        <h2 class="text-2xl font-bold mb-2">Datos no encontrados</h2>
+        <p class="text-slate-500 mb-6 max-w-md">Por favor, completa la App 3 antes de continuar. Se requiere la clave <code>suite_thermal_data_with_ambient</code> en el almacenamiento local.</p>
+        <button onclick="generateMockData()" class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow transition">
+            Generar Datos de Prueba (Simulación)
+        </button>
+    </div>
+
+    <!-- CONTENEDOR PRINCIPAL DE LA APP -->
+    <main id="app-container" class="hidden flex-grow p-6 grid grid-cols-1 lg:grid-cols-4 gap-6 max-w-7xl mx-auto w-full">
+        
+        <!-- PANEL LATERAL: CONTROLES -->
+        <aside class="col-span-1 flex flex-col gap-6">
+            <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+                <h3 class="text-lg font-bold mb-4 flex items-center gap-2 border-b pb-2">
+                    <i class="ph ph-clock text-blue-600"></i> Discretización
+                </h3>
+                <div class="mb-2">
+                    <label class="block text-sm font-medium text-slate-700 mb-1">
+                        Bloque de Configuración (s)
+                    </label>
+                    <p class="text-xs text-slate-500 mb-2">Duración constante del estado de red (min_config_hold).</p>
+                    <div class="flex items-center gap-4">
+                        <input type="range" id="slider-hold" min="2" max="20" step="1" value="10" class="w-full">
+                        <span id="val-hold" class="font-bold text-blue-600 w-8 text-right">10s</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+                <h3 class="text-lg font-bold mb-4 flex items-center gap-2 border-b pb-2">
+                    <i class="ph ph-thermometer text-red-500"></i> Límites de Seguridad
+                </h3>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-slate-700 mb-1">
+                        Temp. Máxima Crítica (T_max)
+                    </label>
+                    <div class="flex items-center gap-4">
+                        <input type="range" id="slider-tmax" min="50" max="150" step="1" value="85" class="w-full">
+                        <span id="val-tmax" class="font-bold text-red-600 w-12 text-right">85°C</span>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">
+                        Temp. Mínima Crítica (T_min)
+                    </label>
+                    <div class="flex items-center gap-4">
+                        <input type="range" id="slider-tmin" min="-60" max="20" step="1" value="-40" class="w-full">
+                        <span id="val-tmin" class="font-bold text-blue-600 w-12 text-right">-40°C</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- EXPORTAR -->
+            <button onclick="exportAndSeal()" class="mt-auto w-full py-3 bg-slate-900 hover:bg-slate-800 text-white rounded-xl shadow-md font-medium transition flex items-center justify-center gap-2">
+                <i class="ph ph-export"></i> Sellar y Enviar al Canvas
+            </button>
+        </aside>
+
+        <!-- ÁREA PRINCIPAL: GRÁFICOS Y TABLAS -->
+        <section class="col-span-1 lg:col-span-3 flex flex-col gap-6">
+            
+            <!-- Gráfico 1: Discretización -->
+            <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+                <h3 class="text-md font-bold text-slate-800 mb-1">Promedio por Bloques de Operación</h3>
+                <p class="text-xs text-slate-500 mb-4">La red no puede conmutar instantáneamente. Se muestran las temperaturas originales vs. el promedio por bloques (Sec 9.1).</p>
+                <div class="relative h-64 w-full">
+                    <canvas id="chart-discretization"></canvas>
+                </div>
+            </div>
+
+            <!-- Gráfico 2: Time-to-Limit -->
+            <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+                <h3 class="text-md font-bold text-slate-800 mb-1">Evolución del Time-to-Limit (&tau;<sub>TTL</sub>)</h3>
+                <p class="text-xs text-slate-500 mb-4">Tiempo proyectado para colisionar con un límite crítico si se mantiene la tasa de cambio actual. Valores truncados visualmente a 300s.</p>
+                <div class="relative h-64 w-full">
+                    <canvas id="chart-ttl"></canvas>
+                </div>
+            </div>
+
+            <!-- Tabla de Urgencia en t=0 -->
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                <div class="p-4 border-b border-slate-200 bg-slate-50">
+                    <h3 class="text-md font-bold text-slate-800">Estado de Urgencia Inicial (t=0)</h3>
+                    <p class="text-xs text-slate-500">Evalúa qué corriente está más próxima a un peligro térmico antes de arrancar.</p>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm text-left">
+                        <thead class="text-xs text-slate-500 uppercase bg-slate-100">
+                            <tr>
+                                <th class="px-4 py-3">Corriente</th>
+                                <th class="px-4 py-3">Temp. Actual</th>
+                                <th class="px-4 py-3">Tasa (dT/dt)</th>
+                                <th class="px-4 py-3">&tau;<sub>TTL</sub> (Segundos)</th>
+                                <th class="px-4 py-3">Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody id="urgency-tbody" class="divide-y divide-slate-200">
+                            <!-- Filas generadas por JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Modal Éxito -->
+    <div id="success-modal" class="fixed inset-0 bg-slate-900/50 hidden items-center justify-center z-50">
+        <div class="bg-white p-8 rounded-2xl shadow-2xl max-w-sm text-center transform scale-95 transition-all">
+            <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="ph ph-check-circle text-4xl text-green-600"></i>
+            </div>
+            <h3 class="text-xl font-bold mb-2">¡Configuración Sellada!</h3>
+            <p class="text-sm text-slate-500 mb-6">Los datos han sido guardados en localStorage ('suite_thermal_final_setup') y están listos para el Canvas Principal.</p>
+            <button onclick="closeModal()" class="w-full py-2 bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition">
+                Aceptar
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // ESTADO GLOBAL
+        let inputData = null;
+        let processedData = {
+            min_config_hold: 10,
+            T_max_limit: 85,
+            T_min_limit: -40,
+            bloques_promedio: {},
+            perfiles_tau_TTL: {}
+        };
+        const TTL_VISUAL_CAP = 300; // Limite visual para gráficos
+
+        // Instancias de Chart.js
+        let chartDisc = null;
+        let chartTTL = null;
+
+        // INICIALIZACIÓN
+        document.addEventListener('DOMContentLoaded', () => {
+            const storedData = localStorage.getItem('suite_thermal_data_with_ambient');
+            
+            if (storedData) {
+                try {
+                    inputData = JSON.parse(storedData);
+                    initApp();
+                } catch (e) {
+                    console.error("Error al parsear los datos", e);
+                    showErrorScreen();
+                }
+            } else {
+                showErrorScreen();
+            }
+
+            setupListeners();
+        });
+
+        function showErrorScreen() {
+            document.getElementById('error-screen').classList.remove('hidden');
+            document.getElementById('app-container').classList.add('hidden');
+        }
+
+        function initApp() {
+            document.getElementById('error-screen').classList.add('hidden');
+            document.getElementById('app-container').classList.remove('hidden');
+            
+            // Forzar derivativas si no vinieron en el mock de la app 3
+            ensureDerivativesExist();
+            
+            runCalculations();
+            initCharts();
+            updateCharts();
+            renderTable();
+        }
+
+        function setupListeners() {
+            const ids = ['hold', 'tmax', 'tmin'];
+            ids.forEach(id => {
+                const slider = document.getElementById(`slider-${id}`);
+                const val = document.getElementById(`val-${id}`);
+                slider.addEventListener('input', (e) => {
+                    const value = Number(e.target.value);
+                    if(id === 'hold') val.textContent = value + 's';
+                    else val.textContent = value + '°C';
+                    
+                    // Actualizar estado global
+                    if(id === 'hold') processedData.min_config_hold = value;
+                    if(id === 'tmax') processedData.T_max_limit = value;
+                    if(id === 'tmin') processedData.T_min_limit = value;
+
+                    // Recalcular y actualizar UI
+                    runCalculations();
+                    updateCharts();
+                    renderTable();
+                });
+            });
+        }
+
+        // LÓGICA MATEMÁTICA Y FÍSICA
+        function runCalculations() {
+            if (!inputData) return;
+            
+            const K = inputData.K || 100;
+            const hold = processedData.min_config_hold;
+            const Tmax = processedData.T_max_limit;
+            const Tmin = processedData.T_min_limit;
+
+            inputData.streams.forEach(stream => {
+                // 1. Cálculo de promedios por bloque (Sec 9.1)
+                const temps = stream.temps;
+                const stepped = new Array(K).fill(0);
+                
+                for (let i = 0; i < K; i += hold) {
+                    let endIndex = Math.min(i + hold, K);
+                    let sum = 0;
+                    for (let j = i; j < endIndex; j++) {
+                        sum += temps[j];
+                    }
+                    let avg = sum / (endIndex - i);
+                    
+                    for (let j = i; j < endIndex; j++) {
+                        stepped[j] = avg;
+                    }
+                }
+                processedData.bloques_promedio[stream.id] = stepped;
+
+                // 2. Cálculo de Time-to-Limit (Sec 8.2)
+                const derivs = stream.derivatives;
+                const ttlProfile = new Array(K).fill(Infinity);
+
+                for (let t = 0; t < K; t++) {
+                    let T = temps[t];
+                    let dT = derivs[t];
+                    let tau = Infinity;
+
+                    // Umbral mínimo de derivada para evitar división por cero
+                    if (dT > 0.05) { 
+                        tau = (Tmax - T) / dT;
+                        if (tau < 0) tau = 0; // Ya superó el límite
+                    } else if (dT < -0.05) {
+                        tau = (Tmin - T) / dT;
+                        if (tau < 0) tau = 0; // Ya superó el límite inferior
+                    }
+                    ttlProfile[t] = tau;
+                }
+                processedData.perfiles_tau_TTL[stream.id] = ttlProfile;
+            });
+        }
+
+        // GRÁFICOS (Chart.js)
+        function initCharts() {
+            const ctxDisc = document.getElementById('chart-discretization').getContext('2d');
+            const ctxTTL = document.getElementById('chart-ttl').getContext('2d');
+            
+            const commonOptions = {
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: { duration: 400 },
+                plugins: {
+                    legend: { position: 'top', labels: { usePointStyle: true, boxWidth: 6 } },
+                    tooltip: { mode: 'index', intersect: false }
+                },
+                scales: {
+                    x: { title: { display: true, text: 'Tiempo (s)' }, grid: { display: false } }
+                }
+            };
+
+            chartDisc = new Chart(ctxDisc, {
+                type: 'line',
+                data: { labels: [], datasets: [] },
+                options: {
+                    ...commonOptions,
+                    scales: {
+                        ...commonOptions.scales,
+                        y: { title: { display: true, text: 'Temperatura (°C)' } }
+                    }
+                }
+            });
+
+            chartTTL = new Chart(ctxTTL, {
+                type: 'line',
+                data: { labels: [], datasets: [] },
+                options: {
+                    ...commonOptions,
+                    scales: {
+                        ...commonOptions.scales,
+                        y: { 
+                            title: { display: true, text: 'Tau TTL (s)' },
+                            min: 0, 
+                            max: TTL_VISUAL_CAP, // Limite visual
+                            ticks: {
+                                callback: function(value) {
+                                    if (value === TTL_VISUAL_CAP) return '> ' + TTL_VISUAL_CAP + ' (Seguro)';
+                                    return value;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateCharts() {
+            if (!chartDisc || !chartTTL || !inputData) return;
+
+            const K = inputData.K || 100;
+            const labels = Array.from({length: K}, (_, i) => i);
+            
+            // Seleccionamos solo las primeras 2 corrientes para no saturar el gráfico
+            const streamsToPlot = inputData.streams.slice(0, 2);
+            
+            // Datasets Discretización
+            const discDatasets = [];
+            const colors = ['#ef4444', '#3b82f6']; // Rojo, Azul
+
+            streamsToPlot.forEach((stream, index) => {
+                const color = colors[index % colors.length];
+                
+                // Original (Faded)
+                discDatasets.push({
+                    label: `${stream.id} (Continua)`,
+                    data: stream.temps,
+                    borderColor: color,
+                    borderWidth: 1.5,
+                    borderDash: [5, 5],
+                    pointRadius: 0,
+                    tension: 0.4,
+                    alpha: 0.5
+                });
+
+                // Stepped
+                discDatasets.push({
+                    label: `${stream.id} (Bloques)`,
+                    data: processedData.bloques_promedio[stream.id],
+                    borderColor: color,
+                    borderWidth: 2,
+                    pointRadius: 0,
+                    stepped: 'middle'
+                });
+            });
+
+            // Datasets TTL
+            const ttlDatasets = [];
+            streamsToPlot.forEach((stream, index) => {
+                const color = colors[index % colors.length];
+                
+                // Truncar para el gráfico
+                const plottedTTL = processedData.perfiles_tau_TTL[stream.id].map(val => 
+                    val > TTL_VISUAL_CAP ? TTL_VISUAL_CAP : val
+                );
+
+                ttlDatasets.push({
+                    label: `TTL ${stream.id}`,
+                    data: plottedTTL,
+                    borderColor: color,
+                    backgroundColor: color + '20',
+                    borderWidth: 2,
+                    pointRadius: 0,
+                    fill: true,
+                    tension: 0.1
+                });
+            });
+
+            chartDisc.data.labels = labels;
+            chartDisc.data.datasets = discDatasets;
+            chartDisc.update();
+
+            chartTTL.data.labels = labels;
+            chartTTL.data.datasets = ttlDatasets;
+            chartTTL.update();
+        }
+
+        // TABLA DE URGENCIA
+        function renderTable() {
+            const tbody = document.getElementById('urgency-tbody');
+            tbody.innerHTML = '';
+
+            // Recopilar datos t=0
+            const t0Data = inputData.streams.map(stream => {
+                return {
+                    id: stream.id,
+                    type: stream.type,
+                    T0: stream.temps[0],
+                    dT0: stream.derivatives[0],
+                    ttl: processedData.perfiles_tau_TTL[stream.id][0]
+                };
+            });
+
+            // Ordenar por TTL ascendente (los más críticos primero)
+            t0Data.sort((a, b) => a.ttl - b.ttl);
+
+            t0Data.forEach((item, index) => {
+                const isCritical = item.ttl < 50; // Umbral visual
+                const isSafe = item.ttl === Infinity || item.ttl > TTL_VISUAL_CAP;
+                
+                let statusBadge = `<span class="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">Seguro</span>`;
+                if (isCritical) {
+                    statusBadge = `<span class="px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-700 animate-pulse">Crítico</span>`;
+                } else if (!isSafe) {
+                    statusBadge = `<span class="px-2 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-700">Atención</span>`;
+                }
+
+                const tr = document.createElement('tr');
+                if (index === 0 && isCritical) tr.classList.add('bg-red-50/50'); // Resaltar el más urgente
+
+                tr.innerHTML = `
+                    <td class="px-4 py-3 font-medium ${item.type === 'hot' ? 'text-red-600' : 'text-blue-600'}">
+                        ${item.id} (${item.type === 'hot' ? 'Caliente' : 'Fría'})
+                    </td>
+                    <td class="px-4 py-3">${item.T0.toFixed(2)} °C</td>
+                    <td class="px-4 py-3">${item.dT0 > 0 ? '+' : ''}${item.dT0.toFixed(3)} °C/s</td>
+                    <td class="px-4 py-3 font-bold ${isCritical ? 'text-red-600' : ''}">
+                        ${isSafe ? '∞' : item.ttl.toFixed(1) + 's'}
+                    </td>
+                    <td class="px-4 py-3">${statusBadge}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // EXPORTACIÓN
+        function exportAndSeal() {
+            // Combinar los datos de entrada con la nueva configuración
+            const finalExport = {
+                ...inputData,
+                config_agregacion: {
+                    min_config_hold: processedData.min_config_hold,
+                    T_max_limit: processedData.T_max_limit,
+                    T_min_limit: processedData.T_min_limit
+                },
+                bloques_promedio: processedData.bloques_promedio,
+                perfiles_tau_TTL: processedData.perfiles_tau_TTL,
+                timestamp: new Date().toISOString()
+            };
+
+            localStorage.setItem('suite_thermal_final_setup', JSON.stringify(finalExport));
+            document.getElementById('success-modal').classList.remove('hidden');
+            document.getElementById('success-modal').classList.add('flex');
+        }
+
+        function closeModal() {
+            document.getElementById('success-modal').classList.add('hidden');
+            document.getElementById('success-modal').classList.remove('flex');
+        }
+
+        // --- FUNCIONES AUXILIARES Y DE MOCK ---
+
+        // Función para calcular derivadas simples si los datos importados no las traen
+        function ensureDerivativesExist() {
+            if (!inputData) return;
+            const K = inputData.K || 100;
+            inputData.streams.forEach(stream => {
+                if (!stream.derivatives || stream.derivatives.length === 0) {
+                    stream.derivatives = new Array(K).fill(0);
+                    for (let i = 0; i < K; i++) {
+                        if (i === 0) stream.derivatives[i] = stream.temps[1] - stream.temps[0];
+                        else if (i === K - 1) stream.derivatives[i] = stream.temps[K - 1] - stream.temps[K - 2];
+                        else stream.derivatives[i] = (stream.temps[i + 1] - stream.temps[i - 1]) / 2; // Diferencia central
+                    }
+                }
+            });
+        }
+
+        // Generador de datos falsos para que el evaluador pueda probar la App sin tener la App 3
+        function generateMockData() {
+            const K = 120; // 2 minutos
+            
+            // Simulación de curvas térmicas con ruido y tendencia
+            const genCurve = (start, end, noiseLvl) => {
+                let curve = [];
+                for(let i = 0; i < K; i++) {
+                    let progress = i / (K - 1);
+                    // Curva base + variación sinusoidal + ruido
+                    let base = start + (end - start) * (1 - Math.exp(-progress * 3));
+                    let noise = (Math.random() - 0.5) * noiseLvl;
+                    curve.push(base + noise);
+                }
+                return curve;
+            };
+
+            const mock = {
+                K: K,
+                streams: [
+                    { id: 'H1', type: 'hot', temps: genCurve(80, 95, 1.5) }, // Se calienta peligrosamente
+                    { id: 'H2', type: 'hot', temps: genCurve(60, 40, 1.0) }, // Se enfría de forma segura
+                    { id: 'C1', type: 'cold', temps: genCurve(10, 45, 1.5) }, // Calentamiento fuerte
+                    { id: 'C2', type: 'cold', temps: genCurve(-20, -45, 0.5) } // Se acerca al límite min
+                ]
+            };
+
+            localStorage.setItem('suite_thermal_data_with_ambient', JSON.stringify(mock));
+            
+            // Recargar para coger los datos
+            inputData = mock;
+            initApp();
+        }
+
+    </script>
+</body>
+</html>
