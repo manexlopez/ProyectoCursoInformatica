@@ -3,268 +3,473 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Presentación de Proyecto - Entorno Integrado</title>
+    <title>Suite Térmica Integrada - Panel Principal</title>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
-        /* ==========================================================================
-           PALETA DE COLORES CÁLIDOS Y CONFIGURACIÓN EDITORIAL
-           ========================================================================== */
         :root {
-            --bg-principal: #fbf9f6;      /* Arena claro / Crema sutil */
-            --bg-tarjeta: #ffffff;        /* Blanco puro para contraste */
-            --bg-interior: #f5f0e8;       /* Beige suave para zonas de código */
-            --texto-principal: #2a2421;   /* Café espresso muy oscuro */
-            --texto-secundario: #7a6f6a;  /* Taupe / Gris cálido */
-            --borde: #e8e1d7;             /* Líneas de unión suaves */
-            --acento: #b58960;            /* Bronce / Oro viejo */
+            --bg-principal: #fbf9f6;
+            --bg-tarjeta: #ffffff;
+            --bg-interior: #f5f0e8;
+            --texto-principal: #2a2421;
+            --texto-secundario: #7a6f6a;
+            --borde: #e8e1d7;
+            --acento: #b58960;
             --sombra: 0 4px 20px rgba(42, 36, 33, 0.03);
         }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
         body {
             background-color: var(--bg-principal);
             color: var(--texto-principal);
             font-family: 'Inter', sans-serif;
             font-weight: 300;
             line-height: 1.5;
-            padding: 40px;
-            max-width: 1400px;
-            margin: 0 auto;
-            display: flex;
-            flex-direction: column;
-            gap: 24px;
         }
 
-        /* ==========================================================================
-           HEADER MINIMALISTA
-           ========================================================================== */
-        header {
-            border-bottom: 1px solid var(--borde);
-            padding-bottom: 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-end;
+        .gradient-accent {
+            background: linear-gradient(135deg, var(--acento) 0%, #d4a574 100%);
         }
 
-        .header-titulo h1 {
-            font-family: 'Cormorant Garamond', serif;
-            font-size: 32px;
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+
+        .card-hover:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 24px rgba(42, 36, 33, 0.08);
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 11px;
             font-weight: 600;
-            letter-spacing: -0.5px;
-            color: var(--texto-principal);
-            line-height: 1.2;
-        }
-
-        .header-titulo p {
-            color: var(--texto-secundario);
-            font-size: 14px;
-            margin-top: 4px;
-            font-style: italic;
-        }
-
-        .header-meta {
-            text-align: right;
-            font-size: 12px;
-            color: var(--texto-secundario);
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 0.5px;
         }
 
-        .header-meta span {
-            color: var(--acento);
-            font-weight: 500;
-        }
+        .status-complete { background-color: #dbeafe; color: #1e40af; }
+        .status-pending { background-color: #fef3c7; color: #92400e; }
+        .status-error { background-color: #fee2e2; color: #991b1b; }
 
-        /* ==========================================================================
-           SECCIÓN PRINCIPAL: APLICACIÓN DETALLADA (IFRAME)
-           ========================================================================== */
-        .seccion-principal {
-            background-color: var(--bg-tarjeta);
+        .app-card {
+            background: var(--bg-tarjeta);
             border: 1px solid var(--borde);
-            border-radius: 4px;
+            border-radius: 8px;
             padding: 20px;
             box-shadow: var(--sombra);
         }
 
-        .titulo-seccion {
-            display: flex;
-            align-items: baseline;
-            gap: 12px;
-            margin-bottom: 14px;
-        }
-
-        .titulo-seccion h2 {
-            font-family: 'Cormorant Garamond', serif;
-            font-size: 22px;
-            font-weight: 600;
-            color: var(--texto-principal);
-        }
-
-        .sub-tag {
-            font-size: 11px;
-            color: var(--acento);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        .contenedor-iframe-principal {
-            width: 100%;
-            height: 460px; /* Altura estilizada */
-            background-color: var(--bg-interior);
-            border: 1px solid var(--borde);
-            overflow: hidden;
-        }
-
-        .iframe-principal {
-            width: 100%;
-            height: 100%;
+        .btn-app {
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: 500;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+            cursor: pointer;
             border: none;
         }
 
-        /* ==========================================================================
-           SECCIÓN INFERIOR: COMPRIMIDA EN 2X2 REQUERIDO
-           ========================================================================== */
-        .grid-2x2 {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 16px; /* Espaciado más ajustado */
-        }
+        .btn-app-1 { background: #4682B4; color: white; }
+        .btn-app-1:hover { background: #3a6c96; }
 
-        .tarjeta-mini-app {
-            background-color: var(--bg-tarjeta);
-            border: 1px solid var(--borde);
-            border-radius: 4px;
-            padding: 12px 16px;
-            box-shadow: var(--sombra);
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
+        .btn-app-2 { background: #2563eb; color: white; }
+        .btn-app-2:hover { background: #1d4ed8; }
 
-        .header-mini-app {
+        .btn-app-3 { background: #059669; color: white; }
+        .btn-app-3:hover { background: #047857; }
+
+        .btn-app-4 { background: #7c3aed; color: white; }
+        .btn-app-4:hover { background: #6d28d9; }
+
+        .data-flow-diagram {
             display: flex;
-            justify-content: space-between;
             align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            margin: 20px 0;
+            flex-wrap: wrap;
         }
 
-        .header-mini-app h3 {
-            font-family: 'Cormorant Garamond', serif;
-            font-size: 16px;
-            font-weight: 600;
-        }
-
-        /* Contenedores de las sub-apps optimizados para ocupar poco espacio */
-        .contenedor-codigo-satelite {
-            width: 100%;
-            height: 130px; /* Súper comprimido para conservar espacio vertical */
-            background-color: var(--bg-interior);
-            border: 1px solid var(--borde);
-            overflow: auto;
-            padding: 10px;
-        }
-
-        .placeholder-texto {
-            color: var(--texto-secundario);
+        .flow-box {
+            background: var(--bg-interior);
+            border: 2px solid var(--borde);
+            padding: 12px 16px;
+            border-radius: 6px;
+            text-align: center;
             font-size: 12px;
-            text-align: center;
-            font-style: italic;
-            margin-top: 45px;
+            font-weight: 600;
+            flex: 1;
+            min-width: 120px;
         }
 
-        footer {
-            text-align: center;
-            font-size: 11px;
-            color: var(--texto-secundario);
-            border-top: 1px solid var(--borde);
-            padding-top: 15px;
-            margin-top: 10px;
+        .flow-arrow {
+            font-size: 20px;
+            color: var(--acento);
         }
 
-        @media (max-width: 850px) {
-            .grid-2x2 { grid-template-columns: 1fr; }
-            body { padding: 20px; }
+        @media (max-width: 768px) {
+            .grid-responsivo { grid-template-columns: 1fr; }
+            .data-flow-diagram { flex-direction: column; }
         }
     </style>
 </head>
-<body>
+<body class="p-4 md:p-8">
 
-    <header>
-        <div class="header-titulo">
-            <h1>Proyecto Integrado de Desarrollo</h1>
-            <p>Sustentación Académica de Módulos Web e Interfaz Core</p>
-        </div>
-        <div class="header-meta">
-            Presentación: <span>Ecosistema Digital</span>
-        </div>
-    </header>
-
-    <main class="seccion-principal">
-        <div class="titulo-seccion">
-            <h2>Módulo Principal Detallado</h2>
-            <span class="sub-tag">— Visualización de Núcleo (Iframe)</span>
-        </div>
+    <div class="max-w-6xl mx-auto space-y-8">
         
-        <div class="contenedor-iframe-principal">
-            <iframe class="iframe-principal" id="app-principal" src="about:blank" title="Aplicación Detallada"></iframe>
+        <!-- HEADER PRINCIPAL -->
+        <header class="border-b border-gray-300 pb-6">
+            <div class="flex justify-between items-start md:items-center gap-4 flex-col md:flex-row">
+                <div>
+                    <h1 class="text-4xl md:text-5xl font-bold text-slate-900" style="font-family: 'Cormorant Garamond', serif;">
+                        Suite Térmica Integrada
+                    </h1>
+                    <p class="text-slate-500 mt-2" style="font-family: 'Cormorant Garamond', serif; font-style: italic;">
+                        Panel Principal de Control — Proyecto de Curso de Doctorado 2026
+                    </p>
+                </div>
+                <div class="text-right">
+                    <p class="text-sm text-slate-600 uppercase tracking-widest">Estado General</p>
+                    <div id="global-status" class="text-2xl font-bold mt-1 text-blue-600">
+                        <span id="status-icon">●</span> Iniciando...
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- DIAGRAMA DE FLUJO DE DATOS -->
+        <section class="bg-white border border-gray-200 rounded-lg p-6">
+            <h2 class="text-xl font-bold text-slate-800 mb-4">Flujo de Datos y Dependencias</h2>
+            <div class="data-flow-diagram">
+                <div class="flow-box">
+                    <div class="font-semibold text-blue-600">App 1</div>
+                    <div class="text-xs text-slate-500 mt-1">Trayectorias</div>
+                </div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-box">
+                    <div class="font-semibold text-blue-600">App 2</div>
+                    <div class="text-xs text-slate-500 mt-1">Propiedades</div>
+                </div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-box">
+                    <div class="font-semibold text-blue-600">App 3</div>
+                    <div class="text-xs text-slate-500 mt-1">Ambiente</div>
+                </div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-box">
+                    <div class="font-semibold text-blue-600">App 4</div>
+                    <div class="text-xs text-slate-500 mt-1">Seguridad</div>
+                </div>
+            </div>
+            <p class="text-xs text-slate-500 mt-4 text-center">
+                Cada aplicación consume datos del localStorage y produce salidas para la siguiente. 
+                Este panel integrador permite acceder y monitorear el flujo completo.
+            </p>
+        </section>
+
+        <!-- NAVEGACIÓN A LAS APLICACIONES -->
+        <section class="space-y-6">
+            <h2 class="text-2xl font-bold text-slate-900" style="font-family: 'Cormorant Garamond', serif;">
+                Acceso a Aplicaciones
+            </h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 grid-responsivo">
+                
+                <!-- APP 1 -->
+                <div class="app-card card-hover border-l-4" style="border-left-color: #4682B4;">
+                    <div class="flex justify-between items-start mb-3">
+                        <div>
+                            <h3 class="text-lg font-bold text-slate-800">App 1: Definidor de Corrientes</h3>
+                            <p class="text-sm text-slate-600 mt-1">Trayectorias dinámicas y perfiles térmicos</p>
+                        </div>
+                        <span id="status-app1" class="status-badge status-pending">Pendiente</span>
+                    </div>
+                    <p class="text-xs text-slate-500 mb-4">
+                        Define corrientes calientes y frías con diferentes perfiles (lineal, sinusoidal, exponencial, polinómico). 
+                        Simula la evolución de temperaturas en el tiempo.
+                    </p>
+                    <div class="space-y-2">
+                        <div id="info-app1" class="bg-blue-50 p-3 rounded text-xs text-slate-700 hidden">
+                            <strong>Datos guardados:</strong> Trayectorias y carga térmica
+                        </div>
+                        <a href="App1.html" target="_blank" class="btn-app btn-app-1">
+                            ✈️ Abrir App 1
+                        </a>
+                    </div>
+                </div>
+
+                <!-- APP 2 -->
+                <div class="app-card card-hover border-l-4" style="border-left-color: #2563eb;">
+                    <div class="flex justify-between items-start mb-3">
+                        <div>
+                            <h3 class="text-lg font-bold text-slate-800">App 2: Propiedades Reales</h3>
+                            <p class="text-sm text-slate-600 mt-1">Análisis termofísico y exergía mecánica</p>
+                        </div>
+                        <span id="status-app2" class="status-badge status-pending">Pendiente</span>
+                    </div>
+                    <p class="text-xs text-slate-500 mb-4">
+                        Importa trayectorias de App 1 y enriquece con propiedades reales de fluidos (H₂, agua). 
+                        Calcula Cp dinámico, densidad, viscosidad y exergía.
+                    </p>
+                    <div class="space-y-2">
+                        <div id="info-app2" class="bg-blue-50 p-3 rounded text-xs text-slate-700 hidden">
+                            <strong>Datos guardados:</strong> Propiedades enriquecidas
+                        </div>
+                        <a href="App2.html" target="_blank" class="btn-app btn-app-2">
+                            ⚙️ Abrir App 2
+                        </a>
+                    </div>
+                </div>
+
+                <!-- APP 3 -->
+                <div class="app-card card-hover border-l-4" style="border-left-color: #059669;">
+                    <div class="flex justify-between items-start mb-3">
+                        <div>
+                            <h3 class="text-lg font-bold text-slate-800">App 3: Auditor Ambiental</h3>
+                            <p class="text-sm text-slate-600 mt-1">Pérdidas ambientales y número de Biot</p>
+                        </div>
+                        <span id="status-app3" class="status-badge status-pending">Pendiente</span>
+                    </div>
+                    <p class="text-xs text-slate-500 mb-4">
+                        Analiza interacción térmica con el ambiente. Calcula número de Biot para validar 
+                        hipótesis de parámetros agrupados. Determina área superficial y pérdidas transitorias.
+                    </p>
+                    <div class="space-y-2">
+                        <div id="info-app3" class="bg-blue-50 p-3 rounded text-xs text-slate-700 hidden">
+                            <strong>Datos guardados:</strong> Auditoria ambiental
+                        </div>
+                        <a href="App3.html" target="_blank" class="btn-app btn-app-3">
+                            🌍 Abrir App 3
+                        </a>
+                    </div>
+                </div>
+
+                <!-- APP 4 -->
+                <div class="app-card card-hover border-l-4" style="border-left-color: #7c3aed;">
+                    <div class="flex justify-between items-start mb-3">
+                        <div>
+                            <h3 class="text-lg font-bold text-slate-800">App 4: Seguridad y Límites</h3>
+                            <p class="text-sm text-slate-600 mt-1">Discretización temporal y Time-to-Limit</p>
+                        </div>
+                        <span id="status-app4" class="status-badge status-pending">Pendiente</span>
+                    </div>
+                    <p class="text-xs text-slate-500 mb-4">
+                        Define límites de seguridad térmica. Calcula Time-to-Limit (τ_TTL) para detectar 
+                        proximidad a condiciones críticas. Discretiza operación en bloques seguros.
+                    </p>
+                    <div class="space-y-2">
+                        <div id="info-app4" class="bg-blue-50 p-3 rounded text-xs text-slate-700 hidden">
+                            <strong>Datos guardados:</strong> Configuración final sellada
+                        </div>
+                        <a href="App4.html" target="_blank" class="btn-app btn-app-4">
+                            🔒 Abrir App 4
+                        </a>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- PANEL DE MONITOREO DE DATOS -->
+        <section class="bg-white border border-gray-200 rounded-lg p-6">
+            <h2 class="text-2xl font-bold text-slate-900 mb-4" style="font-family: 'Cormorant Garamond', serif;">
+                Monitor de Estado de Datos
+            </h2>
+
+            <div class="space-y-4">
+                <!-- Fila 1: App 1 -->
+                <div class="flex items-center justify-between p-4 bg-slate-50 rounded-lg border border-slate-200">
+                    <div class="flex-1">
+                        <div class="font-semibold text-slate-800">suite_thermal_trayectorias</div>
+                        <div class="text-xs text-slate-500 mt-1">Salida de App 1: Trayectorias dinámicas y Q_obs</div>
+                    </div>
+                    <button onclick="checkData('suite_thermal_trayectorias', 'App 1')" class="ml-4 px-3 py-1 bg-blue-100 text-blue-700 text-xs font-semibold rounded hover:bg-blue-200 transition">
+                        Inspeccionar
+                    </button>
+                </div>
+
+                <!-- Fila 2: App 2 -->
+                <div class="flex items-center justify-between p-4 bg-slate-50 rounded-lg border border-slate-200">
+                    <div class="flex-1">
+                        <div class="font-semibold text-slate-800">suite_thermal_data_enriched</div>
+                        <div class="text-xs text-slate-500 mt-1">Salida de App 2: Propiedades reales enriquecidas</div>
+                    </div>
+                    <button onclick="checkData('suite_thermal_data_enriched', 'App 2')" class="ml-4 px-3 py-1 bg-blue-100 text-blue-700 text-xs font-semibold rounded hover:bg-blue-200 transition">
+                        Inspeccionar
+                    </button>
+                </div>
+
+                <!-- Fila 3: App 3 -->
+                <div class="flex items-center justify-between p-4 bg-slate-50 rounded-lg border border-slate-200">
+                    <div class="flex-1">
+                        <div class="font-semibold text-slate-800">suite_thermal_data_with_ambient</div>
+                        <div class="text-xs text-slate-500 mt-1">Salida de App 3: Auditoria ambiental y Número de Biot</div>
+                    </div>
+                    <button onclick="checkData('suite_thermal_data_with_ambient', 'App 3')" class="ml-4 px-3 py-1 bg-blue-100 text-blue-700 text-xs font-semibold rounded hover:bg-blue-200 transition">
+                        Inspeccionar
+                    </button>
+                </div>
+
+                <!-- Fila 4: App 4 -->
+                <div class="flex items-center justify-between p-4 bg-slate-50 rounded-lg border border-slate-200">
+                    <div class="flex-1">
+                        <div class="font-semibold text-slate-800">suite_thermal_final_setup</div>
+                        <div class="text-xs text-slate-500 mt-1">Salida de App 4: Configuración sellada y Time-to-Limit</div>
+                    </div>
+                    <button onclick="checkData('suite_thermal_final_setup', 'App 4')" class="ml-4 px-3 py-1 bg-blue-100 text-blue-700 text-xs font-semibold rounded hover:bg-blue-200 transition">
+                        Inspeccionar
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- RESUMEN RÁPIDO -->
+        <section class="bg-gradient-accent text-white rounded-lg p-6">
+            <h3 class="text-xl font-bold mb-3">Workflow Recomendado</h3>
+            <ol class="space-y-2 text-sm">
+                <li><strong>1.</strong> Abre <strong>App 1</strong> y define tus corrientes térmicas (hot/cold).</li>
+                <li><strong>2.</strong> Guarda las trayectorias (botón "Guardar y Exportar").</li>
+                <li><strong>3.</strong> Abre <strong>App 2</strong>, selecciona fluidos reales y presiones.</li>
+                <li><strong>4.</strong> Enriquece con propiedades termofísicas y guarda ("Guardar y Actualizar BD").</li>
+                <li><strong>5.</strong> Abre <strong>App 3</strong>, configura parámetros ambientales (k, h, geometría).</li>
+                <li><strong>6.</strong> Calcula pérdidas y Número de Biot, guarda ("Guardar Perfil").</li>
+                <li><strong>7.</strong> Abre <strong>App 4</strong>, define límites de seguridad (T_max, T_min).</li>
+                <li><strong>8.</strong> Sella la configuración final ("Sellar y Enviar al Canvas").</li>
+            </ol>
+            <p class="text-xs mt-4 opacity-90">
+                💡 Consejo: Usa los botones "Inspeccionar" para verificar que los datos se transfieren correctamente entre apps.
+            </p>
+        </section>
+
+        <!-- MODAL DE INSPECCIÓN -->
+        <div id="inspect-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50 p-4">
+            <div class="bg-white rounded-lg max-w-2xl w-full max-h-80vh overflow-y-auto">
+                <div class="sticky top-0 bg-slate-100 p-4 border-b border-slate-200 flex justify-between items-center">
+                    <h4 id="modal-title" class="font-bold text-slate-900">Inspeccionar Datos</h4>
+                    <button onclick="closeModal()" class="text-slate-500 hover:text-slate-700 text-xl">✕</button>
+                </div>
+                <div id="modal-content" class="p-4">
+                    <pre class="bg-slate-50 p-4 rounded text-xs overflow-x-auto"><code id="modal-json">Cargando...</code></pre>
+                </div>
+                <div class="bg-slate-50 p-4 border-t border-slate-200 flex gap-2 justify-end sticky bottom-0">
+                    <button onclick="closeModal()" class="px-4 py-2 bg-slate-300 text-slate-900 rounded hover:bg-slate-400 transition">Cerrar</button>
+                    <button onclick="copyToClipboard()" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition">Copiar JSON</button>
+                </div>
+            </div>
         </div>
-    </main>
 
-    <section class="grid-2x2">
-        
-        <article class="tarjeta-mini-app">
-            <div class="header-mini-app">
-                <h3>01. Aplicación Satélite</h3>
-                <span class="sub-tag">Sub-app 1</span>
-            </div>
-            <div class="contenedor-codigo-satelite" id="satelite-1">
-                <div class="placeholder-texto">Adopción de código preparada.</div>
-            </div>
-        </article>
+        <!-- FOOTER -->
+        <footer class="border-t border-gray-300 pt-6 text-center text-sm text-slate-600">
+            <p>
+                Suite Térmica Integrada © 2026 — Proyecto Académico de Doctorado en Ingeniería Informática
+            </p>
+            <p class="mt-2 text-xs">
+                Desarrollado con HTML5, CSS3, JavaScript vanilla y Chart.js para simulación térmica interactiva.
+            </p>
+        </footer>
 
-        <article class="tarjeta-mini-app">
-            <div class="header-mini-app">
-                <h3>02. Aplicación Satélite</h3>
-                <span class="sub-tag">Sub-app 2</span>
-            </div>
-            <div class="contenedor-codigo-satelite" id="satelite-2">
-                <div class="placeholder-texto">Adopción de código preparada.</div>
-            </div>
-        </article>
+    </div>
 
-        <article class="tarjeta-mini-app">
-            <div class="header-mini-app">
-                <h3>03. Aplicación Satélite</h3>
-                <span class="sub-tag">Sub-app 3</span>
-            </div>
-            <div class="contenedor-codigo-satelite" id="satelite-3">
-                <div class="placeholder-texto">Adopción de código preparada.</div>
-            </div>
-        </article>
+    <script>
+        // Variables globales
+        let currentInspectedData = null;
 
-        <article class="tarjeta-mini-app">
-            <div class="header-mini-app">
-                <h3>04. Aplicación Satélite</h3>
-                <span class="sub-tag">Sub-app 4</span>
-            </div>
-            <div class="contenedor-codigo-satelite" id="satelite-4">
-                <div class="placeholder-texto">Adopción de código preparada.</div>
-            </div>
-        </article>
+        // Inicialización
+        document.addEventListener('DOMContentLoaded', () => {
+            updateGlobalStatus();
+            setInterval(updateGlobalStatus, 2000); // Actualizar cada 2 segundos
+        });
 
-    </section>
+        // Función para actualizar estado global
+        function updateGlobalStatus() {
+            const app1 = localStorage.getItem('suite_thermal_trayectorias');
+            const app2 = localStorage.getItem('suite_thermal_data_enriched');
+            const app3 = localStorage.getItem('suite_thermal_data_with_ambient');
+            const app4 = localStorage.getItem('suite_thermal_final_setup');
 
-    <footer>
-        <p>Ecosistema Modular. Proyecto Académico Finalizado.</p>
-    </footer>
+            // Actualizar badges
+            updateStatusBadge('status-app1', app1, 'info-app1');
+            updateStatusBadge('status-app2', app2, 'info-app2');
+            updateStatusBadge('status-app3', app3, 'info-app3');
+            updateStatusBadge('status-app4', app4, 'info-app4');
+
+            // Estado global
+            const completedApps = [app1, app2, app3, app4].filter(x => x !== null).length;
+            const statusEl = document.getElementById('global-status');
+
+            if (completedApps === 0) {
+                statusEl.innerHTML = '<span style="color: #9ca3af;">●</span> Iniciando...';
+            } else if (completedApps < 4) {
+                statusEl.innerHTML = `<span style="color: #fbbf24;">●</span> En Progreso (${completedApps}/4)`;
+            } else {
+                statusEl.innerHTML = '<span style="color: #4ade80;">●</span> Completado ✓';
+            }
+        }
+
+        function updateStatusBadge(badgeId, data, infoId) {
+            const badge = document.getElementById(badgeId);
+            const info = document.getElementById(infoId);
+
+            if (data) {
+                badge.className = 'status-badge status-complete';
+                badge.textContent = '✓ Completado';
+                info.classList.remove('hidden');
+            } else {
+                badge.className = 'status-badge status-pending';
+                badge.textContent = '○ Pendiente';
+                info.classList.add('hidden');
+            }
+        }
+
+        // Inspeccionar datos
+        function checkData(key, appName) {
+            const data = localStorage.getItem(key);
+
+            if (!data) {
+                currentInspectedData = null;
+                document.getElementById('modal-json').textContent = `Sin datos disponibles para ${appName}.\n\nPor favor, completa la aplicación primero.`;
+            } else {
+                try {
+                    currentInspectedData = JSON.parse(data);
+                    document.getElementById('modal-json').textContent = JSON.stringify(currentInspectedData, null, 2);
+                } catch (e) {
+                    document.getElementById('modal-json').textContent = `Error al parsear JSON:\n${e.message}`;
+                }
+            }
+
+            document.getElementById('modal-title').textContent = `Inspeccionar: ${key} (${appName})`;
+            document.getElementById('inspect-modal').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('inspect-modal').classList.add('hidden');
+        }
+
+        function copyToClipboard() {
+            if (!currentInspectedData) return;
+            const json = JSON.stringify(currentInspectedData, null, 2);
+            navigator.clipboard.writeText(json).then(() => {
+                alert('✓ Datos copiados al portapapeles');
+            });
+        }
+
+        // Cerrar modal con tecla Escape
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeModal();
+        });
+    </script>
 
 </body>
 </html>
