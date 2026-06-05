@@ -3,27 +3,25 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>App 3 · Pérdidas Ambientales</title>
+<title>App 2 · Propiedades & Exergía</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
   body{ font-family:'Inter',system-ui,sans-serif; }
   ::-webkit-scrollbar{ width:7px;height:7px; }
   ::-webkit-scrollbar-thumb{ background:#cbd5e1;border-radius:4px; }
-  input[type=range]{ accent-color:#0d9488; }
+  input[type=range]{ accent-color:#2563eb; }
   .glass{ background:rgba(255,255,255,.85); backdrop-filter:blur(6px); }
-  @keyframes wave { 0%{ transform:scale(.6); opacity:.7 } 100%{ transform:scale(1.6); opacity:0 } }
-  .wave{ animation:wave 2s ease-out infinite; transform-origin:center; }
 </style>
 </head>
-<body class="bg-gradient-to-br from-teal-50 to-slate-200 text-slate-800 min-h-screen">
+<body class="bg-gradient-to-br from-blue-50 to-slate-200 text-slate-800 min-h-screen">
 
 <div class="p-3 sm:p-4 max-w-[1500px] mx-auto">
   <header class="flex items-center gap-3 mb-3">
-    <div class="text-3xl">🌍</div>
+    <div class="text-3xl">⚗️</div>
     <div>
-      <h1 class="text-lg sm:text-xl font-extrabold text-slate-900 leading-tight">Pérdidas Ambientales & Biot</h1>
-      <p class="text-xs text-slate-500">Cómo de "aislado" está cada depósito y cuánto calor se escapa hacia el ambiente.</p>
+      <h1 class="text-lg sm:text-xl font-extrabold text-slate-900 leading-tight">Propiedades & Exergía</h1>
+      <p class="text-xs text-slate-500">Asigna un fluido real y una presión a cada componente; mira cómo cambian Cp y la exergía mecánica recuperable.</p>
     </div>
   </header>
 
@@ -31,15 +29,15 @@
     <section id="cards" class="flex flex-col gap-3"></section>
     <section class="flex flex-col gap-3">
       <div class="glass rounded-xl border border-slate-200 p-3">
-        <h3 class="text-sm font-bold text-slate-700 mb-1">Área superficial real vs esfera equivalente · m²</h3>
-        <p class="text-[11px] text-slate-400 mb-1">La geometría cilíndrica real puede tener bastante más superficie (más pérdidas).</p>
-        <div class="relative h-40 sm:h-44"><canvas id="ch-area"></canvas></div>
+        <h3 class="text-sm font-bold text-slate-700 mb-1">Calor específico Cp(T) · J/kg·K</h3>
+        <div class="relative h-44 sm:h-52"><canvas id="ch-cp"></canvas></div>
       </div>
       <div class="glass rounded-xl border border-slate-200 p-3">
-        <h3 class="text-sm font-bold text-slate-700 mb-1">Pérdidas hacia el ambiente Q_amb(t) · kW</h3>
-        <p class="text-[11px] text-slate-400 mb-1">Negativo = el depósito cede calor al aire · Positivo = lo absorbe</p>
-        <div class="relative h-44 sm:h-52"><canvas id="ch-loss"></canvas></div>
+        <h3 class="text-sm font-bold text-slate-700 mb-1">Exergía mecánica disponible (ExPAnD) · kJ</h3>
+        <p class="text-[11px] text-slate-400 mb-1">Trabajo recuperable por la presión del gas: eᴾ = R·T₀·ln(P/P₀)</p>
+        <div class="relative h-40 sm:h-48"><canvas id="ch-ex"></canvas></div>
       </div>
+      <div id="summary" class="glass rounded-xl border border-slate-200 p-3 grid grid-cols-2 gap-2"></div>
     </section>
   </div>
 </div>
@@ -47,29 +45,10 @@
 <script src="core/bus.js"></script>
 <script>
 let app1 = null;
-let configs = Thermal.defaultApp3Config();
-let result = null, chArea = null, chLoss = null;
-
-function biotBadge(Bi){
-  if (Bi < 0.1) return ['bg-green-100 text-green-700 border-green-300','✅ Modelo válido'];
-  if (Bi < 1)  return ['bg-amber-100 text-amber-700 border-amber-300','⚠️ Gradientes moderados'];
-  return ['bg-red-100 text-red-700 border-red-300','⛔ Modelo no válido'];
-}
-
-function tankSVG(s, res){
-  // intensidad de ondas según |Q_amb| medio
-  const qAvg = res.Q_amb.reduce((a,b)=>a+Math.abs(b),0)/res.Q_amb.length;
-  const n = Math.max(1, Math.min(3, Math.round(qAvg/300)));
-  let waves = '';
-  for (let i=0;i<n;i++){
-    waves += `<circle cx="34" cy="30" r="16" fill="none" stroke="${s.color}" stroke-width="2" class="wave" style="animation-delay:${i*0.6}s"/>`;
-  }
-  const isCyl = res.geometry === 'cylinder';
-  const shape = isCyl
-    ? `<rect x="22" y="14" width="24" height="34" rx="11" fill="${s.color}22" stroke="${s.color}" stroke-width="2"/>`
-    : `<circle cx="34" cy="30" r="17" fill="${s.color}22" stroke="${s.color}" stroke-width="2"/>`;
-  return `<svg viewBox="0 0 68 60" class="w-16 h-14">${waves}${shape}<text x="34" y="35" font-size="16" text-anchor="middle">${s.icon}</text></svg>`;
-}
+let configs = Thermal.defaultApp2Config();
+let result = null, chCp = null, chEx = null;
+const fluidLabel = { H2:'Hidrógeno (H₂)', water:'Agua', glycol:'Agua-glicol' };
+const fluidEmoji = { H2:'🫧', water:'💧', glycol:'🧪' };
 
 function buildCards(){
   const streams = (app1 && app1.streams) || Thermal.computeApp1().streams;
@@ -77,108 +56,82 @@ function buildCards(){
   wrap.innerHTML = '';
   streams.forEach(s => {
     const c = configs[s.id];
-    const res = result ? result.streams.find(r => r.id === s.id) : null;
-    const [bClass, bText] = res ? biotBadge(res.Bi) : ['bg-slate-100 text-slate-500 border-slate-300','--'];
     const card = document.createElement('div');
     card.className = 'glass rounded-xl border border-slate-200 p-3';
     card.style.borderLeft = `5px solid ${s.color}`;
     card.innerHTML = `
-      <div class="flex items-center gap-3 mb-2">
-        <div id="svg-${s.id}">${res ? tankSVG(s,res) : ''}</div>
-        <div class="flex-1">
-          <h4 class="font-bold text-slate-800 text-sm">${s.name}</h4>
-          <span class="inline-block mt-1 text-[10px] font-bold px-2 py-0.5 rounded border ${bClass}">${bText} · Bi=${res?res.Bi.toFixed(3):'--'}</span>
-        </div>
+      <div class="flex items-center justify-between mb-2">
+        <h4 class="font-bold text-slate-800 flex items-center gap-2"><span class="text-xl">${s.icon}</span>${s.name}</h4>
+        <span class="text-xs font-mono bg-slate-100 px-2 py-0.5 rounded">${fluidEmoji[c.fluid]} ${fluidLabel[c.fluid]}</span>
       </div>
-      <div class="grid grid-cols-2 gap-x-3 gap-y-2 text-xs">
-        <label class="block">Volumen <b data-d="volume-${s.id}" class="float-right text-teal-700">${c.volume} m³</b>
-          <input type="range" data-id="${s.id}" data-f="volume" min="0.1" max="5" step="0.1" value="${c.volume}" class="w-full">
-        </label>
-        <label class="block">Geometría
-          <select data-id="${s.id}" data-f="geometry" class="w-full mt-0.5 border border-slate-300 rounded px-1 py-1">
-            <option value="cylinder" ${c.geometry==='cylinder'?'selected':''}>Cilindro (L/D=3)</option>
-            <option value="sphere" ${c.geometry==='sphere'?'selected':''}>Esfera</option>
+      <div class="space-y-2 text-xs">
+        <label class="block">Fluido real
+          <select data-id="${s.id}" data-f="fluid" class="w-full mt-0.5 border border-slate-300 rounded px-1.5 py-1">
+            <option value="H2" ${c.fluid==='H2'?'selected':''}>Hidrógeno (H₂)</option>
+            <option value="water" ${c.fluid==='water'?'selected':''}>Agua líquida</option>
+            <option value="glycol" ${c.fluid==='glycol'?'selected':''}>Agua-glicol</option>
           </select>
         </label>
-        <label class="block">Aislamiento h_amb <b data-d="h_amb-${s.id}" class="float-right text-teal-700">${c.h_amb} W/m²K</b>
-          <input type="range" data-id="${s.id}" data-f="h_amb" min="1" max="25" step="0.5" value="${c.h_amb}" class="w-full">
+        <label class="block">Presión <b data-d="P-${s.id}" class="float-right text-blue-600">${c.P_bar} bar</b>
+          <input type="range" data-id="${s.id}" data-f="P_bar" min="1" max="900" step="1" value="${c.P_bar}" class="w-full">
         </label>
-        <label class="block">Convección h_conv <b data-d="h_conv-${s.id}" class="float-right text-teal-700">${c.h_conv}</b>
-          <input type="range" data-id="${s.id}" data-f="h_conv" min="20" max="1000" step="10" value="${c.h_conv}" class="w-full">
-        </label>
-        <div class="col-span-2 flex justify-between text-[11px] text-slate-500 bg-slate-50 rounded px-2 py-1">
-          <span>Lc = <b id="lc-${s.id}" class="text-slate-700">--</b> m</span>
-          <span>Pérdida = <b id="qa-${s.id}" class="text-slate-700">--</b> kWh/ciclo</span>
-        </div>
       </div>`;
     wrap.appendChild(card);
   });
   wrap.querySelectorAll('input,select').forEach(el => {
     el.addEventListener('input', () => {
       const id = el.dataset.id, f = el.dataset.f;
-      configs[id][f] = (f === 'geometry') ? el.value : parseFloat(el.value);
-      const d = document.querySelector(`[data-d="${f}-${id}"]`);
-      if (d){
-        if (f==='volume') d.textContent = el.value + ' m³';
-        else if (f==='h_amb') d.textContent = el.value + ' W/m²K';
-        else d.textContent = el.value;
-      }
+      configs[id][f] = (f === 'fluid') ? el.value : parseFloat(el.value);
+      if (f === 'P_bar') document.querySelector(`[data-d="P-${id}"]`).textContent = el.value + ' bar';
+      if (f === 'fluid') buildCards();
       recompute();
     });
   });
 }
 
-function refreshCardInfo(){
-  result.streams.forEach(r => {
-    const lc = document.getElementById('lc-'+r.id); if (lc) lc.textContent = r.Lc.toFixed(3);
-    const qa = document.getElementById('qa-'+r.id); if (qa) qa.textContent = r.Q_amb_kWh.toFixed(3);
-    const s = Thermal.stationById(r.id);
-    const svg = document.getElementById('svg-'+r.id); if (svg && s) svg.innerHTML = tankSVG(s, r);
-    // badge update
-    const card = lc ? lc.closest('.glass') : null;
-    if (card){
-      const badge = card.querySelector('span.border');
-      if (badge){ const [bc,bt]=biotBadge(r.Bi); badge.className='inline-block mt-1 text-[10px] font-bold px-2 py-0.5 rounded border '+bc; badge.textContent=`${bt} · Bi=${r.Bi.toFixed(3)}`; }
+function baseOpts(yLabel){
+  return {
+    responsive:true, maintainAspectRatio:false, animation:false,
+    interaction:{ mode:'index', intersect:false },
+    plugins:{ legend:{ position:'top', labels:{ usePointStyle:true, boxWidth:7, font:{size:10} } } },
+    scales:{
+      x:{ title:{ display:true, text:'Tiempo (s)', font:{size:10} }, ticks:{ maxTicksLimit:8, font:{size:9} }, grid:{ color:'#eef2f7' } },
+      y:{ title:{ display:true, text:yLabel, font:{size:10} }, ticks:{ font:{size:9} }, grid:{ color:'#eef2f7' }, beginAtZero:false }
     }
-  });
+  };
 }
-
 function initCharts(){
-  chArea = new Chart(document.getElementById('ch-area'), {
-    type:'bar',
-    data:{ labels:[], datasets:[
-      { label:'Geometría real', data:[], backgroundColor:'rgba(13,148,136,.8)' },
-      { label:'Esfera equiv.', data:[], backgroundColor:'rgba(148,163,184,.6)' }
-    ]},
-    options:{ responsive:true, maintainAspectRatio:false, animation:false,
-      plugins:{ legend:{ labels:{ boxWidth:8, font:{size:10} } } },
-      scales:{ y:{ beginAtZero:true, title:{display:true,text:'m²',font:{size:10}}, ticks:{font:{size:9}} }, x:{ ticks:{font:{size:9}} } } }
-  });
-  chLoss = new Chart(document.getElementById('ch-loss'), {
-    type:'line', data:{labels:[],datasets:[]},
-    options:{ responsive:true, maintainAspectRatio:false, animation:false, interaction:{mode:'index',intersect:false},
-      plugins:{ legend:{ labels:{ usePointStyle:true, boxWidth:7, font:{size:10} } } },
-      scales:{ x:{ title:{display:true,text:'Tiempo (s)',font:{size:10}}, ticks:{maxTicksLimit:8,font:{size:9}} },
-               y:{ title:{display:true,text:'kW',font:{size:10}}, ticks:{font:{size:9}}, grid:{ color:c=>c.tick.value===0?'#94a3b8':'#eef2f7' } } } }
-  });
+  chCp = new Chart(document.getElementById('ch-cp'), { type:'line', data:{labels:[],datasets:[]}, options:baseOpts('J/kg·K') });
+  chEx = new Chart(document.getElementById('ch-ex'), { type:'line', data:{labels:[],datasets:[]}, options:baseOpts('kJ') });
 }
 function updateCharts(){
-  chArea.data.labels = result.streams.map(s => s.name);
-  chArea.data.datasets[0].data = result.streams.map(s => s.A_surf);
-  chArea.data.datasets[1].data = result.streams.map(s => s.A_sphere);
-  chArea.update();
-  const labels = (app1 && app1.time) || result.streams[0].Q_amb.map((_,i)=>i);
-  chLoss.data.labels = labels;
-  chLoss.data.datasets = result.streams.map(s => ({
-    label:s.name, data:s.Q_amb.map(q=>q/1000), borderColor:s.color, backgroundColor:s.color+'22',
-    borderWidth:2, pointRadius:0, tension:.2, fill:true
+  const labels = (app1 && app1.time) || result.streams[0].Cp.map((_,i)=>i);
+  chCp.data.labels = labels;
+  chCp.data.datasets = result.streams.map(s => ({
+    label:`${s.name} (${fluidLabel[s.fluid]})`, data:s.Cp, borderColor:s.color, borderWidth:2, pointRadius:0, tension:.25
   }));
-  chLoss.update();
+  chCp.update();
+  chEx.data.labels = labels;
+  chEx.data.datasets = result.streams.map(s => ({
+    label:s.name, data:s.Ex_P, borderColor:s.color, backgroundColor:s.color+'22', borderWidth:2, pointRadius:0, tension:.2, fill:true
+  }));
+  chEx.update();
+}
+function updateSummary(){
+  const el = document.getElementById('summary');
+  el.innerHTML = result.streams.map(s => `
+    <div class="rounded-lg p-2 border" style="border-color:${s.color}33;background:${s.color}0d">
+      <div class="text-xs font-bold flex items-center gap-1">${s.icon} ${s.name}</div>
+      <div class="text-[11px] text-slate-500 mt-1">Cp medio</div>
+      <div class="text-sm font-bold" style="color:${s.color}">${Thermal.fmt(s.Cp_mean,0)} J/kg·K</div>
+      <div class="text-[11px] text-slate-500 mt-1">Exergía pico</div>
+      <div class="text-sm font-bold" style="color:${s.color}">${Thermal.fmt(s.Ex_total,0)} kJ</div>
+    </div>`).join('');
 }
 
 function recompute(){
-  result = Thermal.computeApp3(app1 || Thermal.computeApp1(), configs, 25);
-  updateCharts(); refreshCardInfo();
+  result = Thermal.computeApp2(app1 || Thermal.computeApp1(), configs);
+  updateCharts(); updateSummary();
   Thermal.publish(result);
 }
 
@@ -186,14 +139,16 @@ let lastSig = null;
 function ensureBuilt(){ if (window.__built) return; window.__built = true; buildCards(); }
 
 initCharts();
-Thermal.initApp('app3', (state) => {
+Thermal.initApp('app2', (state) => {
   app1 = state.app1 || Thermal.computeApp1();
-  if (state.app3 && state.app3.streams && !window.__hyd){
+  // hidratar config guardada (una vez)
+  if (state.app2 && state.app2.streams && !window.__hyd){
     window.__hyd = true;
-    state.app3.streams.forEach(ss => { if (configs[ss.id]){ ['volume','geometry','k_solid','h_conv','h_amb'].forEach(f=>{ if(ss[f]!=null) configs[ss.id][f]=ss[f]; }); } });
+    state.app2.streams.forEach(ss => { if (configs[ss.id]) { configs[ss.id].fluid = ss.fluid; configs[ss.id].P_bar = ss.P_bar; } });
   }
+  // solo recalcular cuando cambian de verdad los datos de App1 (evita bucle de eco)
   const sig = JSON.stringify(app1.streams.map(s => s.T)) + app1.K;
-  if (sig !== lastSig){ lastSig = sig; recompute(); ensureBuilt(); refreshCardInfo(); }
+  if (sig !== lastSig){ lastSig = sig; ensureBuilt(); recompute(); }
   else ensureBuilt();
 });
 </script>
