@@ -1,399 +1,404 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Suite Térmica - Sistema Integrado</title>
-    
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hidrolinera Térmica · Suite de Recuperación de Calor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0b1220; --bg2:#111c33; --card:#ffffff; --ink:#0f172a; --muted:#64748b;
+    --hot:#ef4444; --cold:#3b82f6; --rec:#22c55e; --accent:#0ea5e9;
+  }
+  *{ margin:0; padding:0; box-sizing:border-box; }
+  body{ font-family:'Inter',system-ui,sans-serif; color:#e2e8f0;
+        background:radial-gradient(1200px 600px at 50% -10%, #1e293b 0%, var(--bg) 60%); min-height:100vh; }
+  .wrap{ max-width:1400px; margin:0 auto; padding:18px 16px 60px; }
 
-    <style>
-        :root {
-            --primary: #4682B4;
-            --success: #059669;
-            --warning: #f59e0b;
-            --danger: #ef4444;
-            --info: #2563eb;
-            --dark: #1f2937;
-            --light: #f3f4f6;
-        }
+  header.top{ display:flex; align-items:center; gap:14px; margin-bottom:18px; }
+  header.top .logo{ font-size:34px; filter:drop-shadow(0 4px 8px rgba(0,0,0,.4)); }
+  header.top h1{ font-size:clamp(20px,3.2vw,30px); font-weight:800; letter-spacing:-.02em;
+                 background:linear-gradient(90deg,#38bdf8,#a78bfa); -webkit-background-clip:text; background-clip:text; color:transparent; }
+  header.top p{ color:#94a3b8; font-size:13px; max-width:680px; }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+  .section-tag{ display:inline-flex; align-items:center; gap:8px; font-size:12px; font-weight:700; letter-spacing:.08em;
+                text-transform:uppercase; color:#7dd3fc; margin:6px 0 10px; }
+  .section-tag .num{ display:inline-grid; place-items:center; width:22px; height:22px; border-radius:50%;
+                     background:#0ea5e9; color:#04263b; font-size:12px; }
 
-        body {
-            font-family: 'Inter', sans-serif;
-            background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
-            color: var(--dark);
-        }
+  /* ----- MAIN PROJECT CARD ----- */
+  .main-card{ background:linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
+              border:1px solid rgba(148,163,184,.18); border-radius:20px; padding:18px;
+              box-shadow:0 20px 50px -20px rgba(0,0,0,.6); }
+  .main-grid{ display:grid; grid-template-columns:1.45fr 1fr; gap:18px; }
+  @media (max-width:960px){ .main-grid{ grid-template-columns:1fr; } }
 
-        .container { max-width: 1400px; margin: 0 auto; padding: 0 1rem; }
+  .stage{ background:#0c1526; border:1px solid rgba(148,163,184,.15); border-radius:16px; padding:8px; position:relative; }
+  .stage svg{ width:100%; height:auto; display:block; }
 
-        /* HEADER */
-        .header {
-            background: linear-gradient(135deg, var(--primary) 0%, #2c3e50 100%);
-            color: white;
-            padding: 2rem 0;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            margin-bottom: 2rem;
-        }
+  .controls{ display:flex; flex-wrap:wrap; gap:14px 22px; align-items:center; margin:12px 4px 4px; }
+  .controls label{ font-size:12px; color:#cbd5e1; display:flex; align-items:center; gap:8px; }
+  .controls input[type=range]{ accent-color:var(--accent); }
+  .controls b{ color:#7dd3fc; min-width:46px; }
+  .btn{ border:none; cursor:pointer; border-radius:10px; padding:8px 14px; font-weight:700; font-size:13px;
+        background:var(--accent); color:#04263b; }
+  .btn.ghost{ background:rgba(148,163,184,.15); color:#e2e8f0; }
+  .live{ margin-left:auto; font-size:12px; color:#94a3b8; }
+  .live b{ color:#22c55e; font-size:15px; }
 
-        .header-content { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
-        .header h1 { font-size: 2.5rem; font-family: 'Cormorant Garamond', serif; font-weight: 600; }
-        .header p { font-size: 0.875rem; opacity: 0.9; }
+  /* metrics */
+  .metrics{ display:grid; grid-template-columns:repeat(2,1fr); gap:10px; }
+  .metric{ background:#0c1526; border:1px solid rgba(148,163,184,.15); border-radius:14px; padding:12px 13px; }
+  .metric .k{ font-size:11px; color:#94a3b8; font-weight:600; display:flex; align-items:center; gap:6px; }
+  .metric .v{ font-size:22px; font-weight:800; margin-top:3px; }
+  .metric .s{ font-size:11px; color:#64748b; }
+  .metric.green .v{ color:#34d399; } .metric.blue .v{ color:#60a5fa; }
+  .metric.amber .v{ color:#fbbf24; } .metric.violet .v{ color:#a78bfa; }
+  .metric.red .v{ color:#f87171; }
 
-        /* MAIN LAYOUT */
-        .main-grid { display: grid; grid-template-columns: 1fr 2fr 1fr; gap: 1.5rem; margin-bottom: 2rem; }
-        @media (max-width: 1024px) { .main-grid { grid-template-columns: 1fr; } }
+  .bars{ margin-top:12px; background:#0c1526; border:1px solid rgba(148,163,184,.15); border-radius:14px; padding:12px 13px; }
+  .bars h4{ font-size:12px; color:#cbd5e1; margin-bottom:8px; }
+  .barrow{ margin-bottom:9px; }
+  .barrow .lab{ display:flex; justify-content:space-between; font-size:11px; color:#94a3b8; margin-bottom:3px; }
+  .track{ height:14px; border-radius:8px; background:#1e293b; overflow:hidden; display:flex; }
+  .track .rec{ background:linear-gradient(90deg,#16a34a,#22c55e); }
+  .track .util{ background:linear-gradient(90deg,#475569,#64748b); }
 
-        /* PANEL */
-        .panel {
-            background: white;
-            border-radius: 0.5rem;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            padding: 1.5rem;
-            border-left: 4px solid var(--primary);
-        }
+  /* SVG animation */
+  @keyframes dash{ to{ stroke-dashoffset:-28; } }
+  .flow{ stroke-dasharray:9 7; animation:dash .55s linear infinite; }
 
-        .panel h2 { font-size: 1.25rem; margin-bottom: 1rem; font-weight: 600; border-bottom: 1px solid #e5e7eb; padding-bottom: 0.75rem; }
-        .panel h3 { font-size: 1rem; margin-top: 1rem; margin-bottom: 0.5rem; font-weight: 600; color: var(--primary); }
+  /* ----- 4 APPS GRID ----- */
+  .appgrid{ display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:8px; }
+  @media (max-width:760px){ .appgrid{ grid-template-columns:1fr; } }
+  .tile{ background:#0c1526; border:1px solid rgba(148,163,184,.18); border-radius:16px; overflow:hidden;
+         display:flex; flex-direction:column; transition:box-shadow .2s; }
+  .tile:hover{ box-shadow:0 0 0 2px rgba(14,165,233,.35); }
+  .tile-head{ display:flex; align-items:center; gap:8px; padding:9px 12px; cursor:pointer;
+              background:linear-gradient(90deg, rgba(14,165,233,.10), transparent); border-bottom:1px solid rgba(148,163,184,.12); }
+  .tile-head .ico{ font-size:18px; }
+  .tile-head .ttl{ font-weight:700; font-size:13px; color:#e2e8f0; }
+  .tile-head .sub{ font-size:11px; color:#7dd3fc; }
+  .tile-head .exp{ margin-left:auto; font-size:12px; color:#94a3b8; background:rgba(148,163,184,.15);
+                   border-radius:8px; padding:4px 8px; }
+  .tile-body{ flex:1; min-height:0; }
+  .tile iframe{ width:100%; height:340px; border:0; background:#f8fafc; display:block; }
 
-        /* APP SELECTOR */
-        .app-selector {
-            display: flex;
-            flex-direction: column;
-            gap: 0.75rem;
-        }
+  /* expanded */
+  #backdrop{ position:fixed; inset:0; background:rgba(2,6,23,.7); backdrop-filter:blur(3px); z-index:40; display:none; }
+  #backdrop.show{ display:block; }
+  .tile.expanded{ position:fixed; inset:3vh 3vw; z-index:50; box-shadow:0 30px 80px -20px rgba(0,0,0,.8); }
+  .tile.expanded iframe{ height:calc(94vh - 46px); }
+  .tile.expanded .exp{ background:#ef4444; color:#fff; }
 
-        .app-btn {
-            padding: 1rem;
-            border: 2px solid #e5e7eb;
-            border-radius: 0.375rem;
-            background: white;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-weight: 500;
-            text-align: left;
-        }
-
-        .app-btn:hover { border-color: var(--primary); background: #f9fafb; }
-        .app-btn.active { border-color: var(--primary); background: #eff6ff; color: var(--primary); }
-
-        .app-btn-label { display: block; font-size: 0.875rem; opacity: 0.7; }
-
-        /* CANVAS AREA */
-        .canvas-area {
-            background: white;
-            border-radius: 0.5rem;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            padding: 2rem;
-            min-height: 600px;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .canvas-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 2px solid #e5e7eb; }
-        .canvas-header h2 { font-size: 1.5rem; font-weight: 600; }
-        .canvas-header .badge { padding: 0.5rem 1rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 600; }
-
-        .canvas-content { flex: 1; overflow-y: auto; }
-
-        /* STATUS PANEL */
-        .status-panel {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 0.75rem;
-        }
-
-        .status-item {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0.75rem;
-            background: #f9fafb;
-            border-radius: 0.375rem;
-            border-left: 3px solid #e5e7eb;
-        }
-
-        .status-item.completed { border-left-color: var(--success); background: #f0fdf4; }
-        .status-item.active { border-left-color: var(--info); background: #eff6ff; }
-        .status-item.error { border-left-color: var(--danger); background: #fef2f2; }
-
-        .status-icon { font-size: 1.5rem; }
-
-        /* BUTTONS */
-        .btn {
-            padding: 0.75rem 1.5rem;
-            border: none;
-            border-radius: 0.375rem;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .btn-primary { background: var(--primary); color: white; }
-        .btn-primary:hover { background: #3a6c96; }
-
-        .btn-success { background: var(--success); color: white; }
-        .btn-success:hover { background: #047857; }
-
-        .btn-secondary { background: #6b7280; color: white; }
-        .btn-secondary:hover { background: #4b5563; }
-
-        .btn-sm { padding: 0.5rem 1rem; font-size: 0.875rem; }
-
-        /* WORKFLOW STEPS */
-        .workflow-steps {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 2rem;
-            gap: 1rem;
-        }
-
-        .step {
-            flex: 1;
-            text-align: center;
-            padding: 1rem;
-            background: white;
-            border-radius: 0.375rem;
-            border: 2px solid #e5e7eb;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .step:hover { border-color: var(--primary); }
-        .step.completed { background: #f0fdf4; border-color: var(--success); }
-        .step.active { background: #eff6ff; border-color: var(--info); }
-
-        .step-number {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            width: 2rem;
-            height: 2rem;
-            border-radius: 9999px;
-            background: #e5e7eb;
-            font-weight: 600;
-            margin-bottom: 0.5rem;
-        }
-
-        .step.completed .step-number { background: var(--success); color: white; }
-        .step.active .step-number { background: var(--info); color: white; }
-
-        .step-label { font-size: 0.875rem; font-weight: 500; }
-        .step-name { font-size: 0.75rem; opacity: 0.7; margin-top: 0.25rem; }
-
-        /* DATA VIEWER */
-        .data-viewer {
-            background: #1f2937;
-            color: #e5e7eb;
-            padding: 1rem;
-            border-radius: 0.375rem;
-            font-family: 'Courier New', monospace;
-            font-size: 0.75rem;
-            max-height: 300px;
-            overflow-y: auto;
-            margin-top: 1rem;
-        }
-
-        .data-viewer pre { margin: 0; }
-
-        /* MODALS */
-        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; }
-        .modal.show { display: flex; }
-
-        .modal-content {
-            background: white;
-            border-radius: 0.5rem;
-            max-width: 600px;
-            width: 90%;
-            max-height: 80vh;
-            overflow-y: auto;
-            box-shadow: 0 20px 25px rgba(0,0,0,0.15);
-        }
-
-        .modal-header { padding: 1.5rem; border-bottom: 1px solid #e5e7eb; display: flex; justify-content: space-between; align-items: center; }
-        .modal-body { padding: 1.5rem; }
-        .modal-footer { padding: 1.5rem; border-top: 1px solid #e5e7eb; display: flex; gap: 1rem; justify-content: flex-end; }
-
-        /* TABS */
-        .tabs { display: flex; gap: 0; border-bottom: 2px solid #e5e7eb; margin-bottom: 1rem; }
-        .tab { padding: 0.75rem 1.5rem; cursor: pointer; background: transparent; border: none; font-weight: 500; color: #6b7280; transition: all 0.2s ease; }
-        .tab.active { color: var(--primary); border-bottom: 2px solid var(--primary); margin-bottom: -2px; }
-
-        .tab-content { display: none; }
-        .tab-content.active { display: block; }
-
-        /* ANIMATIONS */
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        .fade-in { animation: fadeIn 0.3s ease; }
-
-        @keyframes slideIn { from { transform: translateY(10px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-        .slide-in { animation: slideIn 0.3s ease; }
-
-        /* RESPONSIVE */
-        @media (max-width: 768px) {
-            .header h1 { font-size: 1.875rem; }
-            .main-grid { grid-template-columns: 1fr; }
-            .workflow-steps { flex-direction: column; }
-        }
-
-        .badge-success { background: #d1fae5; color: #065f46; }
-        .badge-warning { background: #fef3c7; color: #92400e; }
-        .badge-danger { background: #fee2e2; color: #991b1b; }
-        .badge-info { background: #dbeafe; color: #1e40af; }
-    </style>
+  .foot{ margin-top:26px; color:#64748b; font-size:12px; text-align:center; line-height:1.6; }
+  .legend{ display:flex; gap:16px; flex-wrap:wrap; justify-content:center; margin-top:8px; font-size:11px; color:#94a3b8; }
+  .legend span{ display:inline-flex; align-items:center; gap:6px; }
+  .dot{ width:10px; height:10px; border-radius:50%; display:inline-block; }
+</style>
 </head>
 <body>
+<div class="wrap">
 
-    <!-- HEADER -->
-    <header class="header">
-        <div class="container">
-            <div class="header-content">
-                <div>
-                    <h1>🔬 Suite Térmica Integrada</h1>
-                    <p>Sistema de Simulación de Intercambio de Calor Transitorio</p>
-                </div>
-                <div id="global-status" style="text-align: right;">
-                    <span id="status-icon">●</span> <span id="status-text">Inicializando...</span>
-                </div>
-            </div>
-        </div>
-    </header>
-
-    <!-- WORKFLOW STEPS -->
-    <div class="container">
-        <div class="workflow-steps" id="workflow-steps"></div>
+  <header class="top">
+    <div class="logo">⛽</div>
+    <div>
+      <h1>Hidrolinera Térmica</h1>
+      <p>Divulgación interactiva de la síntesis de redes de intercambiadores en sistemas térmicos transitorios. Configura los 4 módulos y observa cómo la <b style="color:#34d399">red recupera el calor residual</b> de la estación de hidrógeno.</p>
     </div>
+  </header>
 
-    <!-- MAIN CONTENT -->
-    <div class="container main-grid">
-        
-        <!-- LEFT PANEL: APP SELECTOR -->
-        <div class="panel">
-            <h2>📋 Aplicaciones</h2>
-            <div class="app-selector" id="app-selector"></div>
-
-            <h3 style="margin-top: 2rem;">🔧 Utilidades</h3>
-            <div style="display: flex; flex-direction: column; gap: 0.5rem;">
-                <button class="btn btn-primary btn-sm" onclick="loadMockData()">📊 Datos de Prueba</button>
-                <button class="btn btn-secondary btn-sm" onclick="clearAllData()">🗑️ Limpiar Todo</button>
-                <button class="btn btn-secondary btn-sm" onclick="exportFullData()">💾 Exportar Todo</button>
-                <button class="btn btn-secondary btn-sm" onclick="showSettings()">⚙️ Configuración</button>
-            </div>
-
-            <h3>📊 Estado de Datos</h3>
-            <div class="status-panel" id="status-panel"></div>
+  <!-- =================== PROYECTO PRINCIPAL =================== -->
+  <div class="section-tag"><span class="num">★</span> Proyecto principal · Simulación de la red</div>
+  <div class="main-card">
+    <div class="main-grid">
+      <!-- escenario -->
+      <div>
+        <div class="stage"><svg id="diagram" viewBox="0 0 820 420" preserveAspectRatio="xMidYMid meet"></svg></div>
+        <div class="controls">
+          <label>ΔT mín <input id="dtmin" type="range" min="2" max="30" step="1" value="10"><b id="dtmin-v">10 °C</b></label>
+          <label>Repostajes/día <input id="cpd" type="range" min="10" max="200" step="5" value="50"><b id="cpd-v">50</b></label>
+          <label>⏱️ <input id="mscrub" type="range" min="0" max="60" step="1" value="0"><b id="mscrub-v">0s</b></label>
+          <button id="mplay" class="btn">▶ Ciclo</button>
+          <div class="live">Potencia recuperada ahora: <b id="livekw">0 kW</b></div>
         </div>
-
-        <!-- CENTER CANVAS -->
-        <div class="canvas-area">
-            <div class="canvas-header">
-                <h2 id="canvas-title">Bienvenido a Suite Térmica</h2>
-                <span id="canvas-badge" class="badge badge-info">Panel Principal</span>
-            </div>
-            <div class="canvas-content" id="canvas-content">
-                <div style="text-align: center; padding: 2rem;">
-                    <p style="font-size: 1.125rem; margin-bottom: 1rem;">👈 Selecciona una aplicación para comenzar</p>
-                    <p style="color: #6b7280; font-size: 0.875rem; max-width: 400px; margin: 0 auto;">
-                        Sigue el flujo: <strong>App 1</strong> define corrientes → <strong>App 2</strong> enriquece propiedades → 
-                        <strong>App 3</strong> calcula ambiente → <strong>App 4</strong> establece seguridad
-                    </p>
-                </div>
-            </div>
+        <div class="legend">
+          <span><span class="dot" style="background:#ef4444"></span>Foco caliente</span>
+          <span><span class="dot" style="background:#3b82f6"></span>Demanda fría</span>
+          <span><span class="dot" style="background:#22c55e"></span>Calor recuperado (intercambiador)</span>
+          <span><span class="dot" style="background:#64748b"></span>Utility externa</span>
         </div>
-
-        <!-- RIGHT PANEL: INFO & CONTROL -->
-        <div class="panel">
-            <h2>ℹ️ Información</h2>
-            <div id="info-panel" style="font-size: 0.875rem; line-height: 1.6;">
-                <p>Selecciona una app en el panel izquierdo para ver detalles y controles específicos.</p>
-            </div>
-
-            <h3>📡 localStorage</h3>
-            <div id="storage-info" style="font-size: 0.75rem; background: #f9fafb; padding: 0.75rem; border-radius: 0.375rem; margin-top: 0.5rem; font-family: monospace;">
-                <div>Apps: <span id="storage-apps">0/4</span></div>
-                <div>Tamaño: <span id="storage-size">0 KB</span></div>
-            </div>
-
-            <h3>🎯 Próximo Paso</h3>
-            <div id="next-step" style="background: #eff6ff; padding: 1rem; border-radius: 0.375rem; border-left: 3px solid var(--info); margin-top: 0.5rem; font-size: 0.875rem;">
-                <p><strong>1. Abre App 1</strong></p>
-                <p style="opacity: 0.7; margin-top: 0.5rem;">Define corrientes calientes y frías con diferentes perfiles térmicos</p>
-            </div>
-        </div>
-
+      </div>
+      <!-- panel de resultados -->
+      <div>
+        <div class="metrics" id="metrics"></div>
+        <div class="bars" id="bars"></div>
+      </div>
     </div>
+  </div>
 
-    <!-- MODAL -->
-    <div class="modal" id="modal">
-        <div class="modal-content fade-in">
-            <div class="modal-header">
-                <h3 id="modal-title">Modal</h3>
-                <button onclick="closeModal()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #6b7280;">✕</button>
-            </div>
-            <div class="modal-body" id="modal-body"></div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary btn-sm" onclick="closeModal()">Cerrar</button>
-            </div>
-        </div>
+  <!-- =================== 4 APPS =================== -->
+  <div class="section-tag" style="margin-top:26px"><span class="num">4</span> Módulos de configuración · pulsa una tarjeta para ampliarla</div>
+  <div class="appgrid" id="appgrid">
+    <div class="tile" data-app="app1">
+      <div class="tile-head"><span class="ico">🌡️</span><div><div class="ttl">Trayectorias</div><div class="sub">Módulo 1</div></div><span class="exp">⤢ Ampliar</span></div>
+      <div class="tile-body"><iframe class="appframe" src="App1.html" title="App 1"></iframe></div>
     </div>
+    <div class="tile" data-app="app2">
+      <div class="tile-head"><span class="ico">⚗️</span><div><div class="ttl">Propiedades & Exergía</div><div class="sub">Módulo 2</div></div><span class="exp">⤢ Ampliar</span></div>
+      <div class="tile-body"><iframe class="appframe" src="App2.html" title="App 2"></iframe></div>
+    </div>
+    <div class="tile" data-app="app3">
+      <div class="tile-head"><span class="ico">🌍</span><div><div class="ttl">Pérdidas Ambientales</div><div class="sub">Módulo 3</div></div><span class="exp">⤢ Ampliar</span></div>
+      <div class="tile-body"><iframe class="appframe" src="App3.html" title="App 3"></iframe></div>
+    </div>
+    <div class="tile" data-app="app4">
+      <div class="tile-head"><span class="ico">🛡️</span><div><div class="ttl">Seguridad & Límites</div><div class="sub">Módulo 4</div></div><span class="exp">⤢ Ampliar</span></div>
+      <div class="tile-body"><iframe class="appframe" src="App4.html" title="App 4"></iframe></div>
+    </div>
+  </div>
 
-    <script src="./core/AppOrchestrator.js"></script>
-    <script src="./core/DataManager.js"></script>
-    <script src="./core/UIManager.js"></script>
-    <script>
-        // Inicializar la aplicación
-        document.addEventListener('DOMContentLoaded', () => {
-            AppOrchestrator.initialize();
-        });
+  <div class="foot">
+    Trabajo de divulgación · Síntesis de redes de intercambiadores de calor en sistemas térmicos transitorios.<br>
+    Los 4 módulos se comunican en vivo con la simulación principal mediante <code>localStorage</code> + <code>postMessage</code>.
+  </div>
+</div>
 
-        // Global functions
-        function loadMockData() {
-            AppOrchestrator.loadMockData();
-        }
+<div id="backdrop"></div>
 
-        function clearAllData() {
-            if (confirm('¿Estás seguro de que quieres limpiar todos los datos?')) {
-                DataManager.clearAll();
-                location.reload();
-            }
-        }
+<script src="core/bus.js"></script>
+<script>
+/* ================= HUB ================= */
+let mainOpts = { dTmin: 10, cyclesPerDay: 50 };
+let synth = null, mscrub = 0, mplaying = false, mtimer = null;
 
-        function exportFullData() {
-            const data = DataManager.exportAll();
-            const json = JSON.stringify(data, null, 2);
-            const blob = new Blob([json], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'suite-termica-export.json';
-            a.click();
-            URL.revokeObjectURL(url);
-        }
+const POS = {
+  compresor:{x:130,y:120}, repostaje:{x:130,y:300},
+  acs:{x:690,y:120}, clima:{x:690,y:300},
+  hub:{x:410,y:210}, tower:{x:410,y:46}, boiler:{x:410,y:380}
+};
 
-        function showSettings() {
-            UIManager.showModal('⚙️ Configuración', `
-                <div style="space-y: 1rem;">
-                    <p><strong>localStorage</strong></p>
-                    <p>Los datos se guardan automáticamente en el almacenamiento local del navegador.</p>
-                    <p style="margin-top: 1rem; color: #6b7280; font-size: 0.875rem;">
-                        📝 Sugerencia: Usa DevTools (F12) → Application → localStorage para inspeccionar directamente.
-                    </p>
-                </div>
-            `);
-        }
+const hub = Thermal.createHub((state) => render());
 
-        function closeModal() {
-            document.getElementById('modal').classList.remove('show');
-        }
-    </script>
+/* ================= RENDER ================= */
+function computeSynth(){
+  synth = Thermal.synthesizeHEN(hub.STATE, mainOpts);
+  const sc = document.getElementById('mscrub');
+  sc.max = synth.K;
+  if (mscrub > synth.K){ mscrub = synth.K; sc.value = mscrub; document.getElementById('mscrub-v').textContent = mscrub + 's'; }
+}
+function render(){
+  computeSynth();
+  buildDiagram();
+  updateMetrics();
+  updateFrame(mscrub);
+}
 
+function tankNode(id){
+  const s = Thermal.stationById(id); const p = POS[id];
+  return `<g>
+    <rect id="tank-${id}" x="${p.x-62}" y="${p.y-30}" width="124" height="60" rx="13"
+          fill="#0c1526" fill-opacity="1" stroke="${s.color}" stroke-width="2.5"/>
+    <rect id="tankt-${id}" x="${p.x-62}" y="${p.y-30}" width="124" height="60" rx="13"
+          fill="${s.color}" fill-opacity="0.12" stroke="none"/>
+    <text x="${p.x}" y="${p.y-7}" text-anchor="middle" font-size="13" font-weight="700" fill="#e2e8f0">${s.icon} ${s.name}</text>
+    <text id="temp-${id}" x="${p.x}" y="${p.y+15}" text-anchor="middle" font-size="15" font-weight="800" fill="${s.color}">--</text>
+  </g>`;
+}
+
+function utilBox(id, label, emoji, color){
+  const p = POS[id];
+  return `<g>
+    <rect x="${p.x-70}" y="${p.y-20}" width="140" height="40" rx="10" fill="#0c1526" stroke="${color}" stroke-width="2"/>
+    <text x="${p.x}" y="${p.y+5}" text-anchor="middle" font-size="12.5" font-weight="700" fill="#cbd5e1">${emoji} ${label}</text>
+  </g>`;
+}
+
+function buildDiagram(){
+  const svg = document.getElementById('diagram');
+  let s = '';
+
+  // utilities
+  s += utilBox('tower','Refrigeración', '❄️', '#38bdf8');
+  s += utilBox('boiler','Caldera auxiliar', '🔥', '#fb923c');
+
+  // arrows hot->tower  (cooling leftover) & boiler->cold (heating leftover)
+  const a1 = synth.app1;
+  function streamTotals(){
+    const dt = synth.dt, K = synth.K;
+    const tot = {};
+    a1.streams.forEach(st => {
+      let v=0;
+      if (st.role==='hot') st.Q.forEach(q=>{ v+=Math.max(0,-q); });
+      else st.Q.forEach(q=>{ v+=Math.max(0,q); });
+      tot[st.id]= v*dt/3.6e6;
+    });
+    return tot;
+  }
+  const totals = streamTotals();
+  const recByStream = {};
+  synth.matches.forEach(m => { recByStream[m.h]=(recByStream[m.h]||0)+m.energy_kWh; recByStream[m.c]=(recByStream[m.c]||0)+m.energy_kWh; });
+  function leftover(id){ return Math.max(0,(totals[id]||0)-(recByStream[id]||0)); }
+  const maxTot = Math.max(0.001, ...Object.values(totals));
+
+  // hot -> tower
+  ['compresor','repostaje'].forEach(id=>{
+    const p=POS[id], t=POS.tower; const w=1+5*leftover(id)/maxTot;
+    s += `<path d="M ${p.x} ${p.y-30} C ${p.x} ${t.y+40}, ${t.x-60} ${t.y+30}, ${t.x-40} ${t.y+20}"
+            fill="none" stroke="#64748b" stroke-width="${w.toFixed(1)}" stroke-opacity="0.55" marker-end="url(#agrey)"/>`;
+  });
+  // boiler -> cold
+  ['acs','clima'].forEach(id=>{
+    const p=POS[id], b=POS.boiler; const w=1+5*leftover(id)/maxTot;
+    s += `<path d="M ${b.x+40} ${b.y-20} C ${b.x+60} ${b.y-30}, ${p.x} ${b.y-40}, ${p.x} ${p.y+30}"
+            fill="none" stroke="#fb923c" stroke-width="${w.toFixed(1)}" stroke-opacity="0.5" marker-end="url(#aorange)"/>`;
+  });
+
+  // recovery links (hot -> hub -> cold)
+  const maxE = Math.max(0.001, ...synth.matches.map(m=>m.energy_kWh));
+  synth.matches.forEach((m,i)=>{
+    const h=POS[m.h], c=POS[m.c], hb=POS.hub;
+    const d = `M ${h.x+ (h.x<hb.x?62:-62)} ${h.y} Q ${hb.x} ${hb.y} ${c.x+ (c.x<hb.x?62:-62)} ${c.y}`;
+    const w = 2 + 6*m.energy_kWh/maxE;
+    s += `<path id="link-${i}" d="${d}" fill="none" stroke="#22c55e" stroke-width="${w.toFixed(1)}" stroke-opacity="0.25" stroke-linecap="round"/>`;
+    // moving dot
+    s += `<circle id="dot-${i}" r="4.5" fill="#bbf7d0" opacity="0">
+            <animateMotion dur="${(1.6+0.5*i).toFixed(1)}s" repeatCount="indefinite" path="${d}"/>
+          </circle>`;
+  });
+
+  // hub node
+  const hb=POS.hub;
+  s += `<g>
+    <circle cx="${hb.x}" cy="${hb.y}" r="30" fill="#0c1526" stroke="#22c55e" stroke-width="2.5"/>
+    <text x="${hb.x}" y="${hb.y-2}" text-anchor="middle" font-size="18">♨️</text>
+    <text x="${hb.x}" y="${hb.y+15}" text-anchor="middle" font-size="9" fill="#94a3b8" font-weight="700">HEN</text>
+  </g>`;
+
+  // tanks
+  s += tankNode('compresor')+tankNode('repostaje')+tankNode('acs')+tankNode('clima');
+
+  // defs (arrow markers)
+  const defs = `<defs>
+    <marker id="agrey" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#64748b"/></marker>
+    <marker id="aorange" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#fb923c"/></marker>
+  </defs>`;
+  svg.innerHTML = defs + s;
+}
+
+function updateFrame(k){
+  if (!synth) return;
+  k = Math.min(k, synth.K);
+  // tanks temps + colors
+  synth.app1.streams.forEach(st=>{
+    const t = st.T[k];
+    const tx = document.getElementById('temp-'+st.id);
+    const tint = document.getElementById('tankt-'+st.id);
+    if (tx) tx.textContent = t.toFixed(0)+'°C';
+    if (tint){ tint.setAttribute('fill', Thermal.colorForTemp(t)); tint.setAttribute('fill-opacity','0.30'); }
+  });
+  // links active
+  let liveW = 0;
+  synth.matches.forEach((m,i)=>{
+    const link = document.getElementById('link-'+i);
+    const dot = document.getElementById('dot-'+i);
+    const active = m.active[k] && m.Qrec[k] > 1;
+    if (link){
+      if (active){ link.classList.add('flow'); link.setAttribute('stroke-opacity','0.95'); }
+      else { link.classList.remove('flow'); link.setAttribute('stroke-opacity','0.18'); }
+    }
+    if (dot) dot.setAttribute('opacity', active ? '1':'0');
+    if (active) liveW += m.Qrec[k];
+  });
+  document.getElementById('livekw').textContent = (liveW/1000).toFixed(1)+' kW';
+}
+
+function updateMetrics(){
+  const m = synth.metrics;
+  const safeTxt = isFinite(m.worst_ttl) ? (m.worst_ttl.toFixed(0)+' s') : '∞';
+  const worst = m.worst_id ? Thermal.stationById(m.worst_id) : null;
+  const safeColor = m.worst_ttl<25?'red':(m.worst_ttl<90?'amber':'green');
+  const cards = [
+    ['green','♨️ Calor recuperado', Thermal.fmt(m.recovered,2)+' kWh', 'por ciclo de repostaje'],
+    ['violet','📈 Recuperación', m.recoveryPct.toFixed(0)+' %', 'del calor gestionado'],
+    ['blue','❄️ Refrigeración externa', Thermal.fmt(m.hotUtility,2)+' kWh', 'utility que aún hace falta'],
+    ['amber','🔥 Calefacción externa', Thermal.fmt(m.coldUtility,2)+' kWh', 'utility que aún hace falta'],
+    ['violet','⚡ Exergía destruida', Thermal.fmt(m.exDestroyed,3)+' kWh', 'irreversibilidad de la red'],
+    [safeColor,'🛡️ Margen de seguridad', safeTxt, worst? ('crítico: '+worst.name):'sin riesgo'],
+    ['green','🌱 Ahorro CO₂', Thermal.fmt(m.co2_t_y,1)+' t/año', Thermal.fmt(m.recovered_MWh_y,0)+' MWh/año'],
+    ['green','💶 Ahorro económico', Thermal.fmt(m.euros_y,0)+' €/año', 'a '+synth.cyclesPerDay+' repostajes/día'],
+  ];
+  document.getElementById('metrics').innerHTML = cards.map(c=>`
+    <div class="metric ${c[0]}">
+      <div class="k">${c[1]}</div>
+      <div class="v">${c[2]}</div>
+      <div class="s">${c[3]}</div>
+    </div>`).join('');
+
+  // bars
+  const m2 = synth.metrics;
+  const recH = Math.min(m2.recovered, m2.totalHotAvail);
+  const recC = Math.min(m2.recovered, m2.totalColdDem);
+  function bar(label, rec, util, total){
+    const t = Math.max(1e-6, total);
+    const rp = 100*rec/t, up = 100*util/t;
+    return `<div class="barrow">
+      <div class="lab"><span>${label}</span><span><b style="color:#34d399">${Thermal.fmt(rec,2)}</b> recup · <b style="color:#94a3b8">${Thermal.fmt(util,2)}</b> utility (kWh)</span></div>
+      <div class="track"><div class="rec" style="width:${rp.toFixed(1)}%"></div><div class="util" style="width:${up.toFixed(1)}%"></div></div>
+    </div>`;
+  }
+  document.getElementById('bars').innerHTML =
+    `<h4>Reparto del calor gestionado por ciclo</h4>` +
+    bar('Calor a disipar (focos calientes)', recH, m2.hotUtility, m2.totalHotAvail) +
+    bar('Calor a aportar (demandas frías)', recC, m2.coldUtility, m2.totalColdDem);
+}
+
+/* ================= controles principales ================= */
+document.getElementById('dtmin').addEventListener('input', e=>{
+  mainOpts.dTmin = +e.target.value; document.getElementById('dtmin-v').textContent = e.target.value+' °C'; render();
+});
+document.getElementById('cpd').addEventListener('input', e=>{
+  mainOpts.cyclesPerDay = +e.target.value; document.getElementById('cpd-v').textContent = e.target.value;
+  computeSynth(); updateMetrics();
+});
+document.getElementById('mscrub').addEventListener('input', e=>{
+  mscrub = +e.target.value; document.getElementById('mscrub-v').textContent = mscrub+'s'; updateFrame(mscrub);
+});
+document.getElementById('mplay').addEventListener('click', ()=>{
+  mplaying = !mplaying;
+  document.getElementById('mplay').textContent = mplaying ? '⏸ Pausa' : '▶ Ciclo';
+  if (mplaying){
+    mtimer = setInterval(()=>{
+      mscrub = (mscrub+1) % (synth.K+1);
+      document.getElementById('mscrub').value = mscrub;
+      document.getElementById('mscrub-v').textContent = mscrub+'s';
+      updateFrame(mscrub);
+    }, 110);
+  } else clearInterval(mtimer);
+});
+
+/* ================= expand tiles ================= */
+const backdrop = document.getElementById('backdrop');
+document.querySelectorAll('.tile').forEach(tile=>{
+  tile.querySelector('.tile-head').addEventListener('click', ()=>{
+    const isExp = tile.classList.contains('expanded');
+    document.querySelectorAll('.tile.expanded').forEach(t=>t.classList.remove('expanded'));
+    if (isExp){ backdrop.classList.remove('show'); tile.querySelector('.exp').textContent='⤢ Ampliar'; }
+    else {
+      tile.classList.add('expanded'); backdrop.classList.add('show');
+      tile.querySelector('.exp').textContent='✕ Cerrar';
+      document.querySelectorAll('.tile .exp').forEach(x=>{ if(!x.closest('.tile').classList.contains('expanded')) x.textContent='⤢ Ampliar'; });
+    }
+  });
+});
+backdrop.addEventListener('click', ()=>{
+  document.querySelectorAll('.tile.expanded').forEach(t=>{ t.classList.remove('expanded'); t.querySelector('.exp').textContent='⤢ Ampliar'; });
+  backdrop.classList.remove('show');
+});
+
+/* primer render */
+render();
+</script>
 </body>
 </html>
