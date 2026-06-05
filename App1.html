@@ -1,593 +1,275 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>App 1: Definidor de Corrientes y Trayectorias Dinámicas</title>
-    <!-- Tailwind CSS para estilos de la interfaz -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        steelblue: {
-                            400: '#5c9ac9',
-                            500: '#4682B4',
-                            600: '#3a6c96',
-                        },
-                        darkgray: '#2c3e50',
-                        lightgray: '#f4f7f6'
-                    }
-                }
-            }
-        }
-    </script>
-    <!-- Chart.js para gráficos -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        /* Estilos personalizados para scrollbar y transiciones finas */
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: #f1f1f1; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-        .transition-all { transition-property: all; transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1); transition-duration: 300ms; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>App 1 · Trayectorias Térmicas</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+  body { font-family: 'Inter', system-ui, sans-serif; }
+  ::-webkit-scrollbar { width: 7px; height: 7px; }
+  ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+  input[type=range]{ accent-color:#0ea5e9; }
+  .therm-fill{ transition: height .25s ease, background .25s ease; }
+  .glass{ background:rgba(255,255,255,.85); backdrop-filter:blur(6px); }
+</style>
 </head>
-<body class="bg-lightgray text-slate-800 font-sans min-h-screen flex flex-col">
+<body class="bg-gradient-to-br from-slate-100 to-slate-200 text-slate-800 min-h-screen">
 
-    <!-- Encabezado -->
-    <header class="bg-darkgray text-white shadow-md p-4 flex justify-between items-center z-10 relative">
-        <div>
-            <h1 class="text-xl font-bold tracking-wide">Suite Térmica Transitoria</h1>
-            <h2 class="text-sm text-steelblue-400">App 1: Definidor de Corrientes y Trayectorias</h2>
-        </div>
-        <div class="flex items-center gap-3">
-            <button id="btn-ai-report" class="bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2 px-4 rounded shadow transition-all flex items-center gap-2">
-                ✨ Análisis IA
-            </button>
-            <button id="btn-save" class="bg-steelblue-500 hover:bg-steelblue-600 text-white font-semibold py-2 px-4 rounded shadow transition-all flex items-center gap-2">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>
-                Guardar y Exportar Trayectorias
-            </button>
-        </div>
-    </header>
+<div class="p-3 sm:p-4 max-w-[1500px] mx-auto">
 
-    <!-- Contenedor Principal -->
-    <main class="flex-1 flex flex-col md:flex-row overflow-hidden">
-        
-        <!-- Panel Izquierdo: Controles -->
-        <aside class="w-full md:w-1/3 lg:w-1/4 bg-white border-r border-gray-200 overflow-y-auto p-4 flex flex-col gap-6 shadow-[4px_0_15px_-3px_rgba(0,0,0,0.05)] z-0">
-            
-            <!-- Controles Globales -->
-            <div class="bg-slate-50 p-4 rounded-lg border border-slate-200">
-                <h3 class="font-bold text-darkgray mb-3 flex items-center gap-2 border-b pb-2">
-                    <svg class="w-5 h-5 text-steelblue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                    Configuración Global
-                </h3>
-                <div class="mb-2">
-                    <label class="block text-sm font-medium text-slate-700 mb-1 flex justify-between">
-                        <span>Horizonte de Tiempo (K)</span>
-                        <span id="val-K" class="font-bold text-steelblue-600">60 s</span>
-                    </label>
-                    <input type="range" id="input-K" min="30" max="180" step="1" value="60" class="w-full accent-steelblue-500">
-                </div>
-            </div>
-
-            <!-- Contenedor de Corrientes Dinámicas -->
-            <div id="streams-container" class="flex flex-col gap-4">
-                <!-- El HTML de las corrientes se inyecta vía JavaScript -->
-            </div>
-        </aside>
-
-        <!-- Panel Derecho: Gráficos -->
-        <section class="w-full md:w-2/3 lg:w-3/4 p-4 lg:p-6 flex flex-col gap-6 overflow-y-auto bg-slate-50">
-            <!-- Gráfico 1: Temperaturas -->
-            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex-1 min-h-[300px] flex flex-col">
-                <h3 class="font-bold text-darkgray mb-2">Evolución de la Temperatura vs Tiempo</h3>
-                <div class="relative flex-1 w-full h-full">
-                    <canvas id="chart-temp"></canvas>
-                </div>
-            </div>
-            
-            <!-- Gráfico 2: Carga Térmica (Q_obs) -->
-            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex-1 min-h-[300px] flex flex-col">
-                <h3 class="font-bold text-darkgray mb-2">Carga Térmica Estimada (Q_obs) vs Tiempo</h3>
-                <div class="relative flex-1 w-full h-full">
-                    <canvas id="chart-heat"></canvas>
-                </div>
-            </div>
-        </section>
-    </main>
-
-    <!-- Notificación Toast -->
-    <div id="toast" class="fixed bottom-6 right-6 bg-green-600 text-white px-6 py-3 rounded shadow-lg transform translate-y-12 opacity-0 transition-all duration-300 pointer-events-none z-50 flex items-center gap-2">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-        <span class="font-medium">¡Trayectorias guardadas en localStorage!</span>
+  <!-- cabecera -->
+  <header class="flex items-center gap-3 mb-3">
+    <div class="text-3xl">🌡️</div>
+    <div>
+      <h1 class="text-lg sm:text-xl font-extrabold text-slate-900 leading-tight">Trayectorias Térmicas</h1>
+      <p class="text-xs text-slate-500">Define cómo evoluciona la temperatura de cada componente durante un ciclo de repostaje.</p>
     </div>
+  </header>
 
-    <!-- Modal de Análisis de IA -->
-    <div id="ai-modal" class="fixed inset-0 bg-slate-900 bg-opacity-50 z-50 flex items-center justify-center hidden opacity-0 transition-opacity duration-300">
-        <div class="bg-white rounded-xl shadow-2xl w-11/12 max-w-2xl max-h-[80vh] flex flex-col transform scale-95 transition-transform duration-300" id="ai-modal-content">
-            <div class="flex justify-between items-center p-5 border-b border-slate-200">
-                <h3 class="text-xl font-bold text-darkgray flex items-center gap-2">
-                    <span class="text-purple-600">✨</span> Reporte Térmico de Inteligencia Artificial
-                </h3>
-                <button id="btn-close-modal" class="text-slate-400 hover:text-slate-600 transition-colors">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                </button>
-            </div>
-            <div class="p-6 overflow-y-auto flex-1">
-                <div id="ai-loading" class="flex flex-col items-center justify-center py-10 hidden">
-                    <svg class="animate-spin h-10 w-10 text-purple-600 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    <p class="text-slate-600 font-medium animate-pulse">Analizando dinámicas térmicas...</p>
-                </div>
-                <div id="ai-result" class="prose prose-sm max-w-none text-slate-700"></div>
-                <div id="ai-error" class="hidden bg-red-50 text-red-600 p-4 rounded-lg border border-red-200"></div>
-            </div>
-        </div>
-    </div>
+  <!-- horizonte -->
+  <div class="glass rounded-xl border border-slate-200 p-3 mb-3 flex flex-wrap items-center gap-x-6 gap-y-2">
+    <label class="flex items-center gap-3 text-sm font-medium text-slate-700">
+      Duración del ciclo
+      <input id="K" type="range" min="30" max="150" step="5" value="60" class="w-40">
+      <span id="K-val" class="font-bold text-sky-600 w-12">60 s</span>
+    </label>
+    <label class="flex items-center gap-3 text-sm font-medium text-slate-700 ml-auto">
+      ⏱️ Instante
+      <input id="scrub" type="range" min="0" max="60" step="1" value="30" class="w-44">
+      <span id="scrub-val" class="font-bold text-slate-700 w-10">30s</span>
+    </label>
+    <button id="play" class="px-3 py-1.5 rounded-lg bg-sky-600 hover:bg-sky-700 text-white text-sm font-semibold">▶ Reproducir</button>
+  </div>
 
-    <!-- Lógica de la Aplicación -->
-    <script>
-        // --- 1. ESTADO DE LA APLICACIÓN ---
-        const appState = {
-            K: 60,
-            streams: [
-                { id: 1, name: "Corriente Caliente 1", type: "linear", T_init: 150, T_final: 80, mCp: 5000, amp: 10, freq: 0.05, exp_rate: -3, poly_c1: -70, poly_c2: 0, poly_c3: 0, color: '#e74c3c' },
-                { id: 2, name: "Corriente Fría 2", type: "sinusoidal", T_init: 20, T_final: 60, mCp: 8000, amp: 15, freq: 0.03, exp_rate: 2, poly_c1: 40, poly_c2: 0, poly_c3: 0, color: '#3498db' },
-                { id: 3, name: "Refrigerante Aux.", type: "exponential", T_init: -10, T_final: 10, mCp: 2500, amp: 5, freq: 0.02, exp_rate: 4, poly_c1: 20, poly_c2: -10, poly_c3: 5, color: '#2ecc71' }
-            ]
-        };
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
+    <!-- controles -->
+    <section id="cards" class="flex flex-col gap-3"></section>
 
-        // Instancias de Chart.js
-        let chartTempInstance = null;
-        let chartHeatInstance = null;
+    <!-- visualización -->
+    <section class="flex flex-col gap-3">
+      <!-- termómetros -->
+      <div class="glass rounded-xl border border-slate-200 p-3">
+        <h3 class="text-sm font-bold text-slate-700 mb-2">Estado instantáneo</h3>
+        <div id="therms" class="grid grid-cols-4 gap-2"></div>
+      </div>
+      <!-- chart temperatura -->
+      <div class="glass rounded-xl border border-slate-200 p-3">
+        <h3 class="text-sm font-bold text-slate-700 mb-1">Temperatura vs tiempo (°C)</h3>
+        <div class="relative h-44 sm:h-52"><canvas id="ch-temp"></canvas></div>
+      </div>
+      <!-- chart calor -->
+      <div class="glass rounded-xl border border-slate-200 p-3">
+        <h3 class="text-sm font-bold text-slate-700 mb-1">Carga térmica Q = m·Cp·dT/dt (kW)</h3>
+        <p class="text-[11px] text-slate-400 mb-1">Positivo = absorbe calor · Negativo = libera calor</p>
+        <div class="relative h-40 sm:h-48"><canvas id="ch-heat"></canvas></div>
+      </div>
+    </section>
+  </div>
+</div>
 
-        // --- 2. INICIALIZACIÓN Y RENDERIZADO DOM ---
-        document.addEventListener('DOMContentLoaded', () => {
-            renderStreamsUI();
-            setupEventListeners();
-            recalculateAndRender();
-        });
+<script src="core/bus.js"></script>
+<script>
+let cfg = Thermal.defaultApp1Config();
+let result = null, scrub = 30, playing = false, playTimer = null;
+let chTemp = null, chHeat = null;
 
-        function renderStreamsUI() {
-            const container = document.getElementById('streams-container');
-            container.innerHTML = ''; // Limpiar contenedor
+// ---------- UI controles ----------
+function buildCards(){
+  const wrap = document.getElementById('cards');
+  wrap.innerHTML = '';
+  cfg.streams.forEach((s, i) => {
+    const isHot = s.role === 'hot';
+    const card = document.createElement('div');
+    card.className = 'glass rounded-xl border border-slate-200 p-3';
+    card.style.borderLeft = `5px solid ${s.color}`;
+    card.innerHTML = `
+      <div class="flex items-center justify-between mb-2">
+        <h4 class="font-bold text-slate-800 flex items-center gap-2"><span class="text-xl">${s.icon}</span>${s.name}</h4>
+        <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${isHot?'bg-red-100 text-red-700':'bg-sky-100 text-sky-700'}">
+          ${isHot?'FOCO CALIENTE':'DEMANDA FRÍA'}
+        </span>
+      </div>
+      <div class="grid grid-cols-2 gap-x-3 gap-y-2 text-xs">
+        <label class="block">Perfil
+          <select data-i="${i}" data-f="profile" class="w-full mt-0.5 border border-slate-300 rounded px-1.5 py-1">
+            <option value="linear" ${s.profile==='linear'?'selected':''}>Rampa lineal</option>
+            <option value="exp" ${s.profile==='exp'?'selected':''}>Exponencial</option>
+            <option value="smooth" ${s.profile==='smooth'?'selected':''}>Curva suave (S)</option>
+            <option value="sin" ${s.profile==='sin'?'selected':''}>Oscilante</option>
+          </select>
+        </label>
+        <div></div>
+        <label class="block">T inicial <b data-d="T_init-${i}" class="float-right text-slate-700">${s.T_init}°C</b>
+          <input type="range" data-i="${i}" data-f="T_init" min="-50" max="150" step="1" value="${s.T_init}" class="w-full">
+        </label>
+        <label class="block">T final <b data-d="T_final-${i}" class="float-right text-slate-700">${s.T_final}°C</b>
+          <input type="range" data-i="${i}" data-f="T_final" min="-50" max="150" step="1" value="${s.T_final}" class="w-full">
+        </label>
+        <label class="block col-span-2">Capacidad térmica m·Cp <b data-d="mCp-${i}" class="float-right text-slate-700">${(s.mCp/1000).toFixed(0)} kJ/K</b>
+          <input type="range" data-i="${i}" data-f="mCp" min="5000" max="100000" step="1000" value="${s.mCp}" class="w-full">
+        </label>
+        <label class="block sin-${i} ${s.profile==='sin'?'':'hidden'}">Amplitud <b data-d="amp-${i}" class="float-right text-slate-700">${s.amp} K</b>
+          <input type="range" data-i="${i}" data-f="amp" min="0" max="20" step="1" value="${s.amp}" class="w-full">
+        </label>
+        <label class="block sin-${i} ${s.profile==='sin'?'':'hidden'}">Frecuencia <b data-d="freq-${i}" class="float-right text-slate-700">${s.freq}</b>
+          <input type="range" data-i="${i}" data-f="freq" min="0.01" max="0.2" step="0.01" value="${s.freq}" class="w-full">
+        </label>
+      </div>`;
+    wrap.appendChild(card);
+  });
 
-            appState.streams.forEach((stream, index) => {
-                const streamHTML = `
-                <div class="bg-white p-4 rounded-lg shadow-sm border border-slate-200 border-l-4" style="border-left-color: ${stream.color}">
-                    <div class="flex justify-between items-center mb-3">
-                        <h4 class="font-bold text-slate-800">Corriente ${stream.id}</h4>
-                        <div class="w-4 h-4 rounded-full" style="background-color: ${stream.color}"></div>
-                    </div>
-                    
-                    <div class="space-y-3">
-                        <!-- Nombre -->
-                        <div>
-                            <label class="block text-xs font-medium text-slate-500 mb-1">Nombre de Identificación</label>
-                            <input type="text" data-stream="${index}" data-field="name" value="${stream.name}" class="w-full text-sm border border-slate-300 rounded px-2 py-1.5 focus:outline-none focus:border-steelblue-500 focus:ring-1 focus:ring-steelblue-500">
-                        </div>
-                        
-                        <!-- Tipo de Perfil -->
-                        <div>
-                            <label class="block text-xs font-medium text-slate-500 mb-1">Tipo de Perfil Térmico</label>
-                            <select data-stream="${index}" data-field="type" class="w-full text-sm border border-slate-300 rounded px-2 py-1.5 focus:outline-none focus:border-steelblue-500">
-                                <option value="linear" ${stream.type === 'linear' ? 'selected' : ''}>Rampa Lineal</option>
-                                <option value="sinusoidal" ${stream.type === 'sinusoidal' ? 'selected' : ''}>Ciclo Sinusoidal</option>
-                                <option value="exponential" ${stream.type === 'exponential' ? 'selected' : ''}>Curva Exponencial</option>
-                                <option value="polynomial" ${stream.type === 'polynomial' ? 'selected' : ''}>Polinómica (Grado 3)</option>
-                            </select>
-                        </div>
+  wrap.querySelectorAll('input,select').forEach(el => {
+    el.addEventListener('input', () => {
+      const i = +el.dataset.i, f = el.dataset.f;
+      cfg.streams[i][f] = (f === 'profile') ? el.value : parseFloat(el.value);
+      const d = document.querySelector(`[data-d="${f}-${i}"]`);
+      if (d) {
+        if (f === 'mCp') d.textContent = (cfg.streams[i].mCp/1000).toFixed(0) + ' kJ/K';
+        else if (f === 'amp') d.textContent = cfg.streams[i].amp + ' K';
+        else if (f === 'freq') d.textContent = cfg.streams[i].freq;
+        else d.textContent = el.value + '°C';
+      }
+      if (f === 'profile') {
+        document.querySelectorAll('.sin-'+i).forEach(n => n.classList.toggle('hidden', el.value !== 'sin'));
+      }
+      recompute();
+    });
+  });
+}
 
-                        <div class="grid grid-cols-2 gap-3">
-                            <!-- T Inicial -->
-                            <div>
-                                <label class="block text-xs font-medium text-slate-500 mb-1 flex justify-between">T_init <span class="val-display font-semibold text-slate-700">${stream.T_init}°C</span></label>
-                                <input type="range" data-stream="${index}" data-field="T_init" min="-50" max="200" step="1" value="${stream.T_init}" class="w-full accent-slate-600">
-                            </div>
-                            <!-- T Final -->
-                            <div id="t-final-container-${index}" class="${stream.type === 'polynomial' ? 'hidden' : ''}">
-                                <label class="block text-xs font-medium text-slate-500 mb-1 flex justify-between">T_final <span class="val-display font-semibold text-slate-700">${stream.T_final}°C</span></label>
-                                <input type="range" data-stream="${index}" data-field="T_final" min="-50" max="200" step="1" value="${stream.T_final}" class="w-full accent-slate-600">
-                            </div>
-                        </div>
+// ---------- termómetros ----------
+function buildTherms(){
+  const w = document.getElementById('therms');
+  w.innerHTML = cfg.streams.map(s => `
+    <div class="flex flex-col items-center">
+      <div class="relative w-7 h-28 bg-slate-200 rounded-full overflow-hidden border border-slate-300">
+        <div id="tf-${s.id}" class="therm-fill absolute bottom-0 left-0 w-full" style="height:0%"></div>
+      </div>
+      <div class="text-xl mt-1">${s.icon}</div>
+      <div id="tt-${s.id}" class="text-xs font-bold text-slate-700">--</div>
+    </div>`).join('');
+}
+function updateTherms(){
+  if (!result) return;
+  const k = Math.min(scrub, result.K);
+  result.streams.forEach(s => {
+    const t = s.T[k];
+    const pct = Math.max(2, Math.min(100, (t + 50) / 200 * 100));
+    const fill = document.getElementById('tf-'+s.id);
+    const lab = document.getElementById('tt-'+s.id);
+    if (fill){ fill.style.height = pct + '%'; fill.style.background = Thermal.colorForTemp(t); }
+    if (lab) lab.textContent = t.toFixed(0) + '°C';
+  });
+}
 
-                        <!-- Capacidad Térmica Base (mCp) -->
-                        <div>
-                            <label class="block text-xs font-medium text-slate-500 mb-1 flex justify-between">Capacidad Térmica (m·Cp) <span class="val-display font-semibold text-slate-700">${stream.mCp} J/K</span></label>
-                            <input type="range" data-stream="${index}" data-field="mCp" min="1000" max="10000" step="100" value="${stream.mCp}" class="w-full accent-slate-600">
-                        </div>
+// ---------- charts ----------
+const scrubLine = {
+  id: 'scrubLine',
+  afterDraw(chart){
+    const x = chart.scales.x.getPixelForValue(scrub);
+    const { top, bottom } = chart.chartArea;
+    const ctx = chart.ctx;
+    ctx.save();
+    ctx.strokeStyle = 'rgba(15,23,42,.45)';
+    ctx.lineWidth = 1.5; ctx.setLineDash([4,4]);
+    ctx.beginPath(); ctx.moveTo(x, top); ctx.lineTo(x, bottom); ctx.stroke();
+    ctx.restore();
+  }
+};
+function baseOpts(yLabel){
+  return {
+    responsive:true, maintainAspectRatio:false, animation:false,
+    interaction:{ mode:'index', intersect:false },
+    plugins:{ legend:{ position:'top', labels:{ usePointStyle:true, boxWidth:7, font:{size:10} } } },
+    scales:{
+      x:{ title:{ display:true, text:'Tiempo (s)', font:{size:10} }, ticks:{ maxTicksLimit:8, font:{size:9} }, grid:{ color:'#eef2f7' } },
+      y:{ title:{ display:true, text:yLabel, font:{size:10} }, ticks:{ font:{size:9} }, grid:{ color:'#eef2f7' } }
+    }
+  };
+}
+function initCharts(){
+  chTemp = new Chart(document.getElementById('ch-temp'), { type:'line', data:{labels:[],datasets:[]}, options:baseOpts('°C'), plugins:[scrubLine] });
+  chHeat = new Chart(document.getElementById('ch-heat'), { type:'line', data:{labels:[],datasets:[]}, options:baseOpts('kW'), plugins:[scrubLine] });
+}
+function updateCharts(){
+  const labels = result.time;
+  chTemp.data.labels = labels;
+  chTemp.data.datasets = result.streams.map(s => ({
+    label:s.name, data:s.T, borderColor:s.color, backgroundColor:s.color+'22',
+    borderWidth:2, pointRadius:0, tension:.25, fill:false
+  }));
+  chTemp.update();
+  chHeat.data.labels = labels;
+  chHeat.data.datasets = result.streams.map(s => ({
+    label:s.name, data:s.Q.map(q=>q/1000), borderColor:s.color, backgroundColor:s.color+'22',
+    borderWidth:2, pointRadius:0, tension:.2, fill:true
+  }));
+  chHeat.update();
+}
 
-                        <!-- Opciones Sinusoidales -->
-                        <div id="sin-options-${index}" class="grid grid-cols-2 gap-3 p-3 bg-slate-50 rounded border border-slate-200 mt-2 ${stream.type === 'sinusoidal' ? '' : 'hidden'}">
-                            <div>
-                                <label class="block text-xs font-medium text-slate-500 mb-1 flex justify-between">Amplitud <span class="val-display font-semibold text-slate-700">${stream.amp} K</span></label>
-                                <input type="range" data-stream="${index}" data-field="amp" min="1" max="50" step="1" value="${stream.amp}" class="w-full accent-steelblue-500">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-medium text-slate-500 mb-1 flex justify-between">Frec. <span class="val-display font-semibold text-slate-700">${stream.freq} Hz</span></label>
-                                <input type="range" data-stream="${index}" data-field="freq" min="0.01" max="0.5" step="0.01" value="${stream.freq}" class="w-full accent-steelblue-500">
-                            </div>
-                        </div>
+// ---------- recompute + publish ----------
+function recompute(){
+  result = Thermal.computeApp1(cfg);
+  updateCharts();
+  updateTherms();
+  Thermal.publish(result);
+}
 
-                        <!-- Opciones Exponenciales -->
-                        <div id="exp-options-${index}" class="grid grid-cols-1 gap-3 p-3 bg-slate-50 rounded border border-slate-200 mt-2 ${stream.type === 'exponential' ? '' : 'hidden'}">
-                            <div>
-                                <label class="block text-xs font-medium text-slate-500 mb-1 flex justify-between">Tasa Exponencial (k) <span class="val-display font-semibold text-slate-700">${stream.exp_rate}</span></label>
-                                <input type="range" data-stream="${index}" data-field="exp_rate" min="-10" max="10" step="0.1" value="${stream.exp_rate}" class="w-full accent-steelblue-500">
-                            </div>
-                        </div>
+// ---------- play ----------
+function togglePlay(){
+  playing = !playing;
+  document.getElementById('play').textContent = playing ? '⏸ Pausa' : '▶ Reproducir';
+  if (playing){
+    playTimer = setInterval(() => {
+      scrub = (scrub + 1) % (cfg.K + 1);
+      syncScrub();
+    }, 80);
+  } else clearInterval(playTimer);
+}
+function syncScrub(){
+  document.getElementById('scrub').value = scrub;
+  document.getElementById('scrub-val').textContent = scrub + 's';
+  updateTherms();
+  if (chTemp) chTemp.draw();
+  if (chHeat) chHeat.draw();
+}
 
-                        <!-- Opciones Polinómicas -->
-                        <div id="poly-options-${index}" class="grid grid-cols-1 gap-3 p-3 bg-slate-50 rounded border border-slate-200 mt-2 ${stream.type === 'polynomial' ? '' : 'hidden'}">
-                            <div>
-                                <label class="block text-xs font-medium text-slate-500 mb-1 flex justify-between">Coef. Lineal (c1) <span class="val-display font-semibold text-slate-700">${stream.poly_c1}</span></label>
-                                <input type="range" data-stream="${index}" data-field="poly_c1" min="-300" max="300" step="1" value="${stream.poly_c1}" class="w-full accent-steelblue-500">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-medium text-slate-500 mb-1 flex justify-between">Coef. Cuadrático (c2) <span class="val-display font-semibold text-slate-700">${stream.poly_c2}</span></label>
-                                <input type="range" data-stream="${index}" data-field="poly_c2" min="-300" max="300" step="1" value="${stream.poly_c2}" class="w-full accent-steelblue-500">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-medium text-slate-500 mb-1 flex justify-between">Coef. Cúbico (c3) <span class="val-display font-semibold text-slate-700">${stream.poly_c3}</span></label>
-                                <input type="range" data-stream="${index}" data-field="poly_c3" min="-300" max="300" step="1" value="${stream.poly_c3}" class="w-full accent-steelblue-500">
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                `;
-                container.insertAdjacentHTML('beforeend', streamHTML);
-            });
-        }
+// ---------- init ----------
+document.getElementById('K').addEventListener('input', e => {
+  cfg.K = +e.target.value;
+  document.getElementById('K-val').textContent = cfg.K + ' s';
+  const sc = document.getElementById('scrub');
+  sc.max = cfg.K; if (scrub > cfg.K) scrub = cfg.K;
+  recompute(); syncScrub();
+});
+document.getElementById('scrub').addEventListener('input', e => { scrub = +e.target.value; syncScrub(); });
+document.getElementById('play').addEventListener('click', togglePlay);
 
-        function setupEventListeners() {
-            // Evento global para K
-            const inputK = document.getElementById('input-K');
-            inputK.addEventListener('input', (e) => {
-                appState.K = parseInt(e.target.value);
-                document.getElementById('val-K').innerText = `${appState.K} s`;
-                recalculateAndRender();
-            });
+buildCards();
+buildTherms();
+initCharts();
 
-            // Delegación de eventos para las corrientes (Inputs)
-            const streamsContainer = document.getElementById('streams-container');
-            streamsContainer.addEventListener('input', (e) => {
-                const target = e.target;
-                if(target.hasAttribute('data-stream')) {
-                    const streamIndex = parseInt(target.getAttribute('data-stream'));
-                    const field = target.getAttribute('data-field');
-                    
-                    // Actualizar valor en el estado
-                    if (field === 'name' || field === 'type') {
-                        appState.streams[streamIndex][field] = target.value;
-                    } else {
-                        appState.streams[streamIndex][field] = parseFloat(target.value);
-                        // Actualizar texto adyacente del valor si es slider
-                        const displaySpan = target.parentElement.querySelector('.val-display');
-                        if (displaySpan) {
-                            let unit = "";
-                            if(field === 'T_init' || field === 'T_final') unit = "°C";
-                            if(field === 'mCp') unit = " J/K";
-                            if(field === 'amp') unit = " K";
-                            if(field === 'freq') unit = " Hz";
-                            displaySpan.innerText = `${target.value}${unit}`;
-                        }
-                    }
-
-                    // Lógica de visualización para paneles dinámicos
-                    if (field === 'type') {
-                        const sinPanel = document.getElementById(`sin-options-${streamIndex}`);
-                        const expPanel = document.getElementById(`exp-options-${streamIndex}`);
-                        const polyPanel = document.getElementById(`poly-options-${streamIndex}`);
-                        const tFinalContainer = document.getElementById(`t-final-container-${streamIndex}`);
-                        
-                        // Ocultar todos primero
-                        sinPanel.classList.add('hidden');
-                        expPanel.classList.add('hidden');
-                        polyPanel.classList.add('hidden');
-                        tFinalContainer.classList.remove('hidden');
-
-                        // Mostrar el correspondiente
-                        if (target.value === 'sinusoidal') {
-                            sinPanel.classList.remove('hidden');
-                        } else if (target.value === 'exponential') {
-                            expPanel.classList.remove('hidden');
-                        } else if (target.value === 'polynomial') {
-                            polyPanel.classList.remove('hidden');
-                            tFinalContainer.classList.add('hidden'); // T_final no aplica a poli
-                        }
-                    }
-
-                    recalculateAndRender();
-                }
-            });
-
-            // Evento Guardar
-            document.getElementById('btn-save').addEventListener('click', saveToLocalStorage);
-            
-            // Eventos de IA
-            document.getElementById('btn-ai-report').addEventListener('click', generateAIReport);
-            document.getElementById('btn-close-modal').addEventListener('click', closeAIModal);
-        }
-
-        // --- 3. LÓGICA FÍSICA / MATEMÁTICA ---
-        function computeSimulationData() {
-            const K = appState.K;
-            const timeVector = Array.from({length: K + 1}, (_, i) => i);
-            
-            const results = appState.streams.map(stream => {
-                const T_arr = new Float64Array(K + 1);
-                
-                // 1. Calcular Perfil de Temperaturas
-                for (let t = 0; t <= K; t++) {
-                    const tau = t / K; // Tiempo normalizado [0, 1]
-                    let T = stream.T_init; // Base
-                    
-                    if (stream.type === 'linear') {
-                        T = stream.T_init + (stream.T_final - stream.T_init) * tau;
-                    } 
-                    else if (stream.type === 'sinusoidal') {
-                        T = stream.T_init + (stream.T_final - stream.T_init) * tau + stream.amp * Math.sin(2 * Math.PI * stream.freq * t);
-                    } 
-                    else if (stream.type === 'exponential') {
-                        const k = stream.exp_rate;
-                        if (Math.abs(k) < 0.01) {
-                            T = stream.T_init + (stream.T_final - stream.T_init) * tau; // Fallback lineal si k ~ 0
-                        } else {
-                            T = stream.T_init + (stream.T_final - stream.T_init) * ((Math.exp(k * tau) - 1) / (Math.exp(k) - 1));
-                        }
-                    } 
-                    else if (stream.type === 'polynomial') {
-                        T = stream.T_init + (stream.poly_c1 * tau) + (stream.poly_c2 * Math.pow(tau, 2)) + (stream.poly_c3 * Math.pow(tau, 3));
-                    }
-                    
-                    T_arr[t] = T;
-                }
-
-                // 2. Calcular Derivada Temporal dT/dt
-                const dTdt = new Float64Array(K + 1).fill(0);
-                if (K > 0) {
-                    // Extremo izquierdo (Diferencia hacia adelante)
-                    dTdt[0] = T_arr[1] - T_arr[0];
-                    // Extremo derecho (Diferencia hacia atrás)
-                    dTdt[K] = T_arr[K] - T_arr[K-1];
-                    // Interior (Diferencia central)
-                    for (let t = 1; t < K; t++) {
-                        dTdt[t] = (T_arr[t+1] - T_arr[t-1]) / 2.0;
-                    }
-                }
-
-                // 3. Calcular Tasa de Calor Observado: Q = mCp * dT/dt
-                const Q_arr = Array.from(dTdt).map(dt => stream.mCp * dt);
-
-                return {
-                    id: stream.id,
-                    name: stream.name,
-                    color: stream.color,
-                    mCp_base: stream.mCp,
-                    T: Array.from(T_arr),
-                    Q_obs_init: Q_arr
-                };
-            });
-
-            return { time: timeVector, streams: results };
-        }
-
-        // --- 4. GRÁFICOS (Chart.js) ---
-        function recalculateAndRender() {
-            const data = computeSimulationData();
-            
-            const datasetsTemp = data.streams.map(s => ({
-                label: s.name,
-                data: s.T,
-                borderColor: s.color,
-                backgroundColor: s.color + '33', // Transparencia
-                borderWidth: 2,
-                pointRadius: 0,
-                pointHoverRadius: 4,
-                tension: 0.1
-            }));
-
-            const datasetsHeat = data.streams.map(s => ({
-                label: s.name,
-                data: s.Q_obs_init,
-                borderColor: s.color,
-                backgroundColor: s.color + '33',
-                borderWidth: 2,
-                pointRadius: 0,
-                pointHoverRadius: 4,
-                tension: 0.1,
-                borderDash: s.id === 2 ? [5, 5] : [] // Diferenciar visualmente
-            }));
-
-            updateChart(chartTempInstance, 'chart-temp', data.time, datasetsTemp, 'Temperatura (°C)');
-            updateChart(chartHeatInstance, 'chart-heat', data.time, datasetsHeat, 'Carga Térmica (W)');
-        }
-
-        function updateChart(chartInstance, canvasId, labels, datasets, yAxisLabel) {
-            const ctx = document.getElementById(canvasId).getContext('2d');
-            
-            const config = {
-                type: 'line',
-                data: { labels: labels, datasets: datasets },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    interaction: { mode: 'index', intersect: false },
-                    plugins: {
-                        legend: { position: 'top', labels: { usePointStyle: true, boxWidth: 8 } },
-                        tooltip: { backgroundColor: 'rgba(44, 62, 80, 0.9)', titleFont: {size: 13}, bodyFont: {size: 13} }
-                    },
-                    scales: {
-                        x: { 
-                            title: { display: true, text: 'Tiempo de simulación (s)', font: {weight: 'bold'} },
-                            grid: { color: '#f1f5f9' }
-                        },
-                        y: { 
-                            title: { display: true, text: yAxisLabel, font: {weight: 'bold'} },
-                            grid: { color: '#f1f5f9' }
-                        }
-                    }
-                }
-            };
-
-            if (canvasId === 'chart-temp') {
-                if (chartTempInstance) chartTempInstance.destroy();
-                chartTempInstance = new Chart(ctx, config);
-            } else {
-                if (chartHeatInstance) chartHeatInstance.destroy();
-                chartHeatInstance = new Chart(ctx, config);
-            }
-        }
-
-        // --- 5. ALMACENAMIENTO Y EXPORTACIÓN ---
-        function saveToLocalStorage() {
-            const data = computeSimulationData();
-            
-            // Construir el JSON de salida según las especificaciones
-            const exportData = {
-                K: appState.K,
-                time: data.time,
-                streams: data.streams.map(s => ({
-                    id: s.id,
-                    name: s.name,
-                    T: s.T,
-                    Q_obs_init: s.Q_obs_init,
-                    mCp_base: s.mCp_base
-                }))
-            };
-
-            // Guardar en localStorage
-            localStorage.setItem("suite_thermal_trayectorias", JSON.stringify(exportData));
-            
-            // Mostrar Toast Notification
-            showToast();
-        }
-
-        function showToast() {
-            const toast = document.getElementById('toast');
-            toast.classList.remove('translate-y-12', 'opacity-0');
-            toast.classList.add('translate-y-0', 'opacity-100');
-            
-            setTimeout(() => {
-                toast.classList.remove('translate-y-0', 'opacity-100');
-                toast.classList.add('translate-y-12', 'opacity-0');
-            }, 3000);
-        }
-
-        // --- 6. INTEGRACIÓN DE INTELIGENCIA ARTIFICIAL (GEMINI API) ---
-        const apiKey = ""; // La clave se inyectará en el entorno de ejecución
-
-        async function fetchWithRetry(url, options, retries = 5) {
-            const delays = [1000, 2000, 4000, 8000, 16000]; // Backoff exponencial
-            for (let i = 0; i < retries; i++) {
-                try {
-                    const response = await fetch(url, options);
-                    if (!response.ok) throw new Error(`Error HTTP: ${response.status}`);
-                    return await response.json();
-                } catch (error) {
-                    if (i === retries - 1) throw error;
-                    await new Promise(resolve => setTimeout(resolve, delays[i]));
-                }
-            }
-        }
-
-        function openAIModal() {
-            const modal = document.getElementById('ai-modal');
-            const modalContent = document.getElementById('ai-modal-content');
-            modal.classList.remove('hidden');
-            // Pequeño delay para permitir que la transición CSS funcione
-            setTimeout(() => {
-                modal.classList.remove('opacity-0');
-                modalContent.classList.remove('scale-95');
-            }, 10);
-        }
-
-        function closeAIModal() {
-            const modal = document.getElementById('ai-modal');
-            const modalContent = document.getElementById('ai-modal-content');
-            modal.classList.add('opacity-0');
-            modalContent.classList.add('scale-95');
-            setTimeout(() => {
-                modal.classList.add('hidden');
-            }, 300); // Esperar a que termine la transición
-        }
-
-        function formatMarkdown(text) {
-            // Formateo muy básico de Markdown a HTML para presentar la respuesta
-            return text
-                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                .replace(/\*(.*?)\*/g, '<em>$1</em>')
-                .replace(/\n\n/g, '</p><p class="mt-4">')
-                .replace(/\n/g, '<br>')
-                .replace(/^- (.*)$/gm, '<li class="ml-4 list-disc">$1</li>');
-        }
-
-        async function generateAIReport() {
-            openAIModal();
-            
-            const loadingEl = document.getElementById('ai-loading');
-            const resultEl = document.getElementById('ai-result');
-            const errorEl = document.getElementById('ai-error');
-            
-            loadingEl.classList.remove('hidden');
-            resultEl.innerHTML = '';
-            errorEl.classList.add('hidden');
-
-            // Preparar el contexto para la IA usando los datos de la simulación
-            const simData = computeSimulationData();
-            
-            // Simplificamos los datos para no saturar el prompt con demasiados arrays numéricos
-            const summaryData = simData.streams.map(s => {
-                const qMax = Math.max(...s.Q_obs_init.map(Math.abs));
-                return `Corriente '${s.name}' (Capacidad base: ${s.mCp_base} J/K): T_inicial=${s.T[0].toFixed(1)}°C, T_final=${s.T[s.T.length-1].toFixed(1)}°C. Carga térmica máxima observada: ${qMax.toFixed(2)} W.`;
-            }).join('\n');
-
-            const prompt = `
-            Actúa como un ingeniero jefe de sistemas térmicos. Analiza la siguiente configuración de un sistema transitorio de intercambio de calor (duración: ${appState.K} segundos).
-            
-            Datos del sistema:
-            ${summaryData}
-            
-            Por favor proporciona un reporte técnico breve en español (máximo 3 párrafos cortos) que:
-            1. Resuma el comportamiento general del sistema.
-            2. Identifique cuál es la corriente más crítica (la que demanda/libera mayor pico de energía).
-            3. Dé 1 o 2 recomendaciones de diseño o advertencias sobre posibles choques térmicos o ineficiencias.
-            `;
-
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
-            const payload = {
-                contents: [{ parts: [{ text: prompt }] }]
-            };
-
-            try {
-                const data = await fetchWithRetry(url, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-
-                const aiText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-                
-                if (aiText) {
-                    resultEl.innerHTML = `<p>${formatMarkdown(aiText)}</p>`;
-                } else {
-                    throw new Error("Respuesta vacía de la API.");
-                }
-            } catch (error) {
-                console.error("Error al generar el reporte IA:", error);
-                errorEl.textContent = "Hubo un error de conexión al generar el reporte térmico. Por favor, revisa la consola o inténtalo nuevamente más tarde.";
-                errorEl.classList.remove('hidden');
-            } finally {
-                loadingEl.classList.add('hidden');
-            }
-        }
-
-    </script>
+// el bus puede entregar una configuración previamente guardada
+Thermal.initApp('app1', (state) => {
+  if (state.app1 && state.app1.streams && !window.__hydrated){
+    window.__hydrated = true;
+    // re-hidratar controles desde lo guardado (manteniendo orden de STATION)
+    const saved = state.app1;
+    cfg.K = saved.K || cfg.K;
+    saved.streams.forEach(ss => {
+      const t = cfg.streams.find(x => x.id === ss.id);
+      if (t){ ['profile','T_init','T_final','mCp','amp','freq'].forEach(f => { if (ss[f]!=null) t[f]=ss[f]; }); }
+    });
+    document.getElementById('K').value = cfg.K;
+    document.getElementById('K-val').textContent = cfg.K + ' s';
+    document.getElementById('scrub').max = cfg.K;
+    buildCards();
+  }
+});
+recompute();
+syncScrub();
+</script>
 </body>
 </html>
