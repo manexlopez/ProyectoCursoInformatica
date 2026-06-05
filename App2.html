@@ -3,42 +3,53 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>App 2 · Propiedades & Exergía</title>
+<title>App 2 · Propiedades del H₂</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.tailwindcss.com"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
-  body{ font-family:'Inter',system-ui,sans-serif; }
-  ::-webkit-scrollbar{ width:7px;height:7px; }
-  ::-webkit-scrollbar-thumb{ background:#cbd5e1;border-radius:4px; }
-  input[type=range]{ accent-color:#2563eb; }
-  .glass{ background:rgba(255,255,255,.85); backdrop-filter:blur(6px); }
+  :root{ --ink:#1d2533; --muted:#6f7889; --line:#e4e7ee; --accent:#2a3647; --bronze:#b08d57; }
+  *{ box-sizing:border-box; }
+  body{ font-family:'Inter',system-ui,sans-serif; color:var(--ink); background:#eef0f4; }
+  h1,h2,h3,.serif{ font-family:'Cormorant Garamond',serif; }
+  ::-webkit-scrollbar{ width:8px;height:8px; }
+  ::-webkit-scrollbar-thumb{ background:#cdd3dd;border-radius:4px; }
+  .panel{ background:#fff; border:1px solid var(--line); border-radius:14px; }
+  .eyebrow{ font-size:11px; letter-spacing:.18em; text-transform:uppercase; color:var(--bronze); font-weight:600; }
+  input[type=range]{ accent-color:var(--accent); }
+  select{ accent-color:var(--accent); }
+  .stat b{ font-variant-numeric:tabular-nums; }
 </style>
 </head>
-<body class="bg-gradient-to-br from-blue-50 to-slate-200 text-slate-800 min-h-screen">
+<body class="min-h-screen">
 
-<div class="p-3 sm:p-4 max-w-[1500px] mx-auto">
-  <header class="flex items-center gap-3 mb-3">
-    <div class="text-3xl">⚗️</div>
-    <div>
-      <h1 class="text-lg sm:text-xl font-extrabold text-slate-900 leading-tight">Propiedades & Exergía</h1>
-      <p class="text-xs text-slate-500">Asigna un fluido real y una presión a cada componente; mira cómo cambian Cp y la exergía mecánica recuperable.</p>
-    </div>
+<div class="p-4 sm:p-6 max-w-[1500px] mx-auto">
+
+  <header class="mb-4 pb-3 border-b" style="border-color:var(--line)">
+    <div class="eyebrow">Módulo 2 — Termofísica</div>
+    <h1 class="text-3xl sm:text-4xl font-semibold leading-tight">Propiedades del Hidrógeno</h1>
+    <p class="text-sm text-[color:var(--muted)] mt-1">Cada depósito de H₂ se representa como un gas a presión: la <em>velocidad</em> de las partículas refleja la temperatura y su <em>densidad</em> la masa contenida. La exergía mide el trabajo recuperable.</p>
   </header>
 
-  <div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
-    <section id="cards" class="flex flex-col gap-3"></section>
-    <section class="flex flex-col gap-3">
-      <div class="glass rounded-xl border border-slate-200 p-3">
-        <h3 class="text-sm font-bold text-slate-700 mb-1">Calor específico Cp(T) · J/kg·K</h3>
-        <div class="relative h-44 sm:h-52"><canvas id="ch-cp"></canvas></div>
-      </div>
-      <div class="glass rounded-xl border border-slate-200 p-3">
-        <h3 class="text-sm font-bold text-slate-700 mb-1">Exergía mecánica disponible (ExPAnD) · kJ</h3>
-        <p class="text-[11px] text-slate-400 mb-1">Trabajo recuperable por la presión del gas: eᴾ = R·T₀·ln(P/P₀)</p>
-        <div class="relative h-40 sm:h-48"><canvas id="ch-ex"></canvas></div>
-      </div>
-      <div id="summary" class="glass rounded-xl border border-slate-200 p-3 grid grid-cols-2 gap-2"></div>
-    </section>
+  <!-- línea de tiempo -->
+  <div class="panel p-3 mb-4 flex flex-wrap items-center gap-x-6 gap-y-2">
+    <div class="eyebrow">Ciclo de repostaje</div>
+    <label class="flex items-center gap-3 text-sm ml-0 sm:ml-2">
+      <input id="scrub" type="range" min="0" max="60" step="1" value="0" class="w-48 sm:w-64">
+      <span id="scrub-v" class="font-semibold w-10 tabular-nums">0 s</span>
+    </label>
+    <button id="play" class="ml-auto px-4 py-1.5 rounded-lg text-white text-sm font-semibold" style="background:var(--accent)">▶ Reproducir ciclo</button>
+  </div>
+
+  <div id="cards" class="grid grid-cols-1 lg:grid-cols-2 gap-4"></div>
+
+  <!-- ranking de exergía -->
+  <div class="panel p-4 mt-4">
+    <div class="flex items-baseline justify-between mb-3">
+      <h3 class="text-xl font-semibold">Exergía mecánica recuperable</h3>
+      <span class="text-xs text-[color:var(--muted)]">trabajo útil contenido en el gas a presión · eᴾ = R·T₀·ln(P/P₀)</span>
+    </div>
+    <div id="ranking" class="space-y-2"></div>
   </div>
 </div>
 
@@ -46,9 +57,10 @@
 <script>
 let app1 = null;
 let configs = Thermal.defaultApp2Config();
-let result = null, chCp = null, chEx = null;
-const fluidLabel = { H2:'Hidrógeno (H₂)', water:'Agua', glycol:'Agua-glicol' };
-const fluidEmoji = { H2:'🫧', water:'💧', glycol:'🧪' };
+let result = null;
+let k = 0, playing = false, playTimer = null;
+let maxEx = 1, maxRho = 1;
+const particles = {}; // por stream
 
 function buildCards(){
   const streams = (app1 && app1.streams) || Thermal.computeApp1().streams;
@@ -57,100 +69,203 @@ function buildCards(){
   streams.forEach(s => {
     const c = configs[s.id];
     const card = document.createElement('div');
-    card.className = 'glass rounded-xl border border-slate-200 p-3';
-    card.style.borderLeft = `5px solid ${s.color}`;
+    card.className = 'panel p-4';
     card.innerHTML = `
-      <div class="flex items-center justify-between mb-2">
-        <h4 class="font-bold text-slate-800 flex items-center gap-2"><span class="text-xl">${s.icon}</span>${s.name}</h4>
-        <span class="text-xs font-mono bg-slate-100 px-2 py-0.5 rounded">${fluidEmoji[c.fluid]} ${fluidLabel[c.fluid]}</span>
+      <div class="flex items-center gap-3 mb-3">
+        <span style="color:${s.color}">${Thermal.glyphSVG(s.id,26,s.color)}</span>
+        <div class="flex-1">
+          <h3 class="text-lg font-semibold leading-none">${s.name}</h3>
+          <span class="text-[11px] uppercase tracking-wider font-semibold" style="color:${s.role==='hot'?'#b3492c':'#3a6ea5'}">${s.role==='hot'?'Fuente de calor':'Demanda de calor'}</span>
+        </div>
       </div>
-      <div class="space-y-2 text-xs">
-        <label class="block">Fluido real
-          <select data-id="${s.id}" data-f="fluid" class="w-full mt-0.5 border border-slate-300 rounded px-1.5 py-1">
-            <option value="H2" ${c.fluid==='H2'?'selected':''}>Hidrógeno (H₂)</option>
-            <option value="water" ${c.fluid==='water'?'selected':''}>Agua líquida</option>
-            <option value="glycol" ${c.fluid==='glycol'?'selected':''}>Agua-glicol</option>
-          </select>
-        </label>
-        <label class="block">Presión <b data-d="P-${s.id}" class="float-right text-blue-600">${c.P_bar} bar</b>
-          <input type="range" data-id="${s.id}" data-f="P_bar" min="1" max="900" step="1" value="${c.P_bar}" class="w-full">
-        </label>
+      <div class="grid grid-cols-[120px_1fr] gap-4 items-start">
+        <!-- columna visual -->
+        <div class="flex flex-col items-center gap-2">
+          <canvas id="cv-${s.id}" width="120" height="150" class="rounded-lg" style="background:linear-gradient(180deg,#f7f8fa,#eef1f5);border:1px solid var(--line)"></canvas>
+          <div id="gauge-${s.id}" class="w-full"></div>
+        </div>
+        <!-- columna datos -->
+        <div class="space-y-3">
+          <label class="block text-xs text-[color:var(--muted)]">Fluido
+            <select data-id="${s.id}" data-f="fluid" class="w-full mt-0.5 border rounded px-2 py-1 text-sm" style="border-color:var(--line)">
+              <option value="H2" selected>Hidrógeno (H₂)</option>
+            </select>
+          </label>
+          <label class="block text-xs text-[color:var(--muted)]">Presión <b data-d="P-${s.id}" class="float-right text-[color:var(--ink)] text-sm">${c.P_bar} bar</b>
+            <input type="range" data-id="${s.id}" data-f="P_bar" min="1" max="900" step="1" value="${c.P_bar}" class="w-full">
+          </label>
+          <div class="grid grid-cols-3 gap-1 text-center pt-1">
+            <div class="stat"><div class="text-[10px] text-[color:var(--muted)]">Temp.</div><b id="rd-T-${s.id}" class="text-sm">--</b></div>
+            <div class="stat"><div class="text-[10px] text-[color:var(--muted)]">Cp</div><b id="rd-cp-${s.id}" class="text-sm">--</b></div>
+            <div class="stat"><div class="text-[10px] text-[color:var(--muted)]">ρ</div><b id="rd-rho-${s.id}" class="text-sm">--</b></div>
+          </div>
+          <!-- batería de exergía -->
+          <div>
+            <div class="flex justify-between text-[11px] text-[color:var(--muted)] mb-1"><span>Exergía</span><b id="rd-ex-${s.id}" class="text-[color:var(--ink)]">--</b></div>
+            <div class="h-3 rounded-full overflow-hidden" style="background:#eef1f5;border:1px solid var(--line)">
+              <div id="bat-${s.id}" class="h-full rounded-full" style="width:0%;background:linear-gradient(90deg,${s.color}99,${s.color})"></div>
+            </div>
+          </div>
+        </div>
       </div>`;
     wrap.appendChild(card);
+    particles[s.id] = [];
   });
+
   wrap.querySelectorAll('input,select').forEach(el => {
     el.addEventListener('input', () => {
       const id = el.dataset.id, f = el.dataset.f;
       configs[id][f] = (f === 'fluid') ? el.value : parseFloat(el.value);
       if (f === 'P_bar') document.querySelector(`[data-d="P-${id}"]`).textContent = el.value + ' bar';
-      if (f === 'fluid') buildCards();
       recompute();
+      if (f === 'P_bar') drawGauge(id);
     });
   });
+  Object.keys(particles).forEach(drawGauge);
 }
 
-function baseOpts(yLabel){
-  return {
-    responsive:true, maintainAspectRatio:false, animation:false,
-    interaction:{ mode:'index', intersect:false },
-    plugins:{ legend:{ position:'top', labels:{ usePointStyle:true, boxWidth:7, font:{size:10} } } },
-    scales:{
-      x:{ title:{ display:true, text:'Tiempo (s)', font:{size:10} }, ticks:{ maxTicksLimit:8, font:{size:9} }, grid:{ color:'#eef2f7' } },
-      y:{ title:{ display:true, text:yLabel, font:{size:10} }, ticks:{ font:{size:9} }, grid:{ color:'#eef2f7' }, beginAtZero:false }
-    }
-  };
+function gaugeSVG(id){
+  const c = configs[id]; const s = Thermal.stationById(id);
+  const P = c.P_bar, Pmax = 900;
+  const frac = P / Pmax;
+  const cx=60, cy=46, r=36;
+  const ang = Math.PI * (1 - frac);
+  const x = cx + r*Math.cos(ang), y = cy - r*Math.sin(ang);
+  const arcLen = Math.PI * r;
+  return `<svg viewBox="0 0 120 58" class="w-full">
+    <path d="M${cx-r},${cy} A${r},${r} 0 0,1 ${cx+r},${cy}" fill="none" stroke="#e7eaf0" stroke-width="7" stroke-linecap="round"/>
+    <path d="M${cx-r},${cy} A${r},${r} 0 0,1 ${cx+r},${cy}" fill="none" stroke="${s.color}" stroke-width="7" stroke-linecap="round" stroke-dasharray="${arcLen.toFixed(1)}" stroke-dashoffset="${(arcLen*(1-frac)).toFixed(1)}"/>
+    <line x1="${cx}" y1="${cy}" x2="${x.toFixed(1)}" y2="${y.toFixed(1)}" stroke="#37414f" stroke-width="2"/>
+    <circle cx="${cx}" cy="${cy}" r="3" fill="#37414f"/>
+    <text x="${cx}" y="${cy-9}" text-anchor="middle" font-size="11" font-weight="700" fill="#37414f">${P} bar</text>
+  </svg>`;
 }
-function initCharts(){
-  chCp = new Chart(document.getElementById('ch-cp'), { type:'line', data:{labels:[],datasets:[]}, options:baseOpts('J/kg·K') });
-  chEx = new Chart(document.getElementById('ch-ex'), { type:'line', data:{labels:[],datasets:[]}, options:baseOpts('kJ') });
-}
-function updateCharts(){
-  const labels = (app1 && app1.time) || result.streams[0].Cp.map((_,i)=>i);
-  chCp.data.labels = labels;
-  chCp.data.datasets = result.streams.map(s => ({
-    label:`${s.name} (${fluidLabel[s.fluid]})`, data:s.Cp, borderColor:s.color, borderWidth:2, pointRadius:0, tension:.25
-  }));
-  chCp.update();
-  chEx.data.labels = labels;
-  chEx.data.datasets = result.streams.map(s => ({
-    label:s.name, data:s.Ex_P, borderColor:s.color, backgroundColor:s.color+'22', borderWidth:2, pointRadius:0, tension:.2, fill:true
-  }));
-  chEx.update();
-}
-function updateSummary(){
-  const el = document.getElementById('summary');
-  el.innerHTML = result.streams.map(s => `
-    <div class="rounded-lg p-2 border" style="border-color:${s.color}33;background:${s.color}0d">
-      <div class="text-xs font-bold flex items-center gap-1">${s.icon} ${s.name}</div>
-      <div class="text-[11px] text-slate-500 mt-1">Cp medio</div>
-      <div class="text-sm font-bold" style="color:${s.color}">${Thermal.fmt(s.Cp_mean,0)} J/kg·K</div>
-      <div class="text-[11px] text-slate-500 mt-1">Exergía pico</div>
-      <div class="text-sm font-bold" style="color:${s.color}">${Thermal.fmt(s.Ex_total,0)} kJ</div>
-    </div>`).join('');
-}
+function drawGauge(id){ const g = document.getElementById('gauge-'+id); if (g) g.innerHTML = gaugeSVG(id); }
 
 function recompute(){
   result = Thermal.computeApp2(app1 || Thermal.computeApp1(), configs);
-  updateCharts(); updateSummary();
+  // normalizadores
+  maxEx = Math.max(1, ...result.streams.map(s => Math.max(...s.Ex_P)));
+  maxRho = Math.max(1, ...result.streams.map(s => Math.max(...s.rho)));
   Thermal.publish(result);
+  updateReadouts();
 }
 
-let lastSig = null;
-function ensureBuilt(){ if (window.__built) return; window.__built = true; buildCards(); }
+function streamAt(id){
+  const s = result.streams.find(x => x.id === id);
+  const kk = Math.min(k, s.Cp.length - 1);
+  const T = (app1 ? app1.streams.find(x=>x.id===id).T[kk] : 25);
+  return { s, kk, T, cp:s.Cp[kk], rho:s.rho[kk], ex:s.Ex_P[kk] };
+}
 
-initCharts();
-Thermal.initApp('app2', (state) => {
+function updateReadouts(){
+  if (!result) return;
+  result.streams.forEach(st => {
+    const d = streamAt(st.id);
+    const setT = document.getElementById('rd-T-'+st.id); if (setT) setT.textContent = d.T.toFixed(0)+'°C';
+    const setC = document.getElementById('rd-cp-'+st.id); if (setC) setC.textContent = (d.cp>=1000? (d.cp/1000).toFixed(1)+'k':d.cp.toFixed(0));
+    const setR = document.getElementById('rd-rho-'+st.id); if (setR) setR.textContent = d.rho.toFixed(1);
+    const setE = document.getElementById('rd-ex-'+st.id); if (setE) setE.textContent = Thermal.fmt(d.ex,0)+' kJ';
+    const bat = document.getElementById('bat-'+st.id); if (bat) bat.style.width = Math.max(2, Math.min(100, d.ex/maxEx*100))+'%';
+  });
+  updateRanking();
+}
+
+function updateRanking(){
+  const el = document.getElementById('ranking');
+  if (!el) return;
+  const rows = result.streams.map(st => ({ st, ex: streamAt(st.id).ex }));
+  el.innerHTML = rows.map(r => `
+    <div class="flex items-center gap-3">
+      <span class="text-xs w-44 truncate" style="color:${r.st.color}">${r.st.name}</span>
+      <div class="flex-1 h-4 rounded" style="background:#eef1f5">
+        <div class="h-full rounded" style="width:${Math.max(2,r.ex/maxEx*100).toFixed(1)}%;background:${r.st.color}"></div>
+      </div>
+      <b class="text-xs w-20 text-right tabular-nums">${Thermal.fmt(r.ex,0)} kJ</b>
+    </div>`).join('');
+}
+
+// ---------- animación de partículas ----------
+function ensureParticles(id, count){
+  const arr = particles[id];
+  while (arr.length < count) arr.push({ x: 12+Math.random()*96, y: 14+Math.random()*122, vx:(Math.random()-.5), vy:(Math.random()-.5) });
+  while (arr.length > count) arr.pop();
+}
+function tick(){
+  if (result){
+    result.streams.forEach(st => {
+      const cv = document.getElementById('cv-'+st.id); if (!cv) return;
+      const ctx = cv.getContext('2d');
+      const d = streamAt(st.id);
+      const T_K = d.T + 273.15;
+      const speed = 0.4 + (T_K - 230) / 110;            // velocidad ∝ temperatura
+      const count = Math.round(8 + (d.rho / maxRho) * 54); // nº partículas ∝ densidad
+      ensureParticles(st.id, count);
+      const col = Thermal.colorForTemp(d.T);
+      ctx.clearRect(0,0,120,150);
+      // cilindro
+      ctx.save();
+      const rx=8, ry=8, x0=8, y0=10, w=104, h=130;
+      ctx.beginPath();
+      ctx.moveTo(x0+rx,y0);
+      ctx.arcTo(x0+w,y0,x0+w,y0+h,rx);
+      ctx.arcTo(x0+w,y0+h,x0,y0+h,rx);
+      ctx.arcTo(x0,y0+h,x0,y0,rx);
+      ctx.arcTo(x0,y0,x0+w,y0,rx);
+      ctx.closePath();
+      ctx.clip();
+      const arr = particles[st.id];
+      arr.forEach(p => {
+        const sp = Math.max(0.25, speed);
+        p.x += p.vx*sp; p.y += p.vy*sp;
+        if (p.x<x0+2||p.x>x0+w-2){ p.vx*=-1; p.x=Math.max(x0+2,Math.min(x0+w-2,p.x)); }
+        if (p.y<y0+2||p.y>y0+h-2){ p.vy*=-1; p.y=Math.max(y0+2,Math.min(y0+h-2,p.y)); }
+        ctx.beginPath(); ctx.arc(p.x,p.y,1.9,0,6.283); ctx.fillStyle=col; ctx.fill();
+      });
+      ctx.restore();
+      ctx.lineWidth=1.5; ctx.strokeStyle='#c4cad6';
+      ctx.beginPath();
+      ctx.moveTo(x0+rx,y0);
+      ctx.arcTo(x0+w,y0,x0+w,y0+h,rx);
+      ctx.arcTo(x0+w,y0+h,x0,y0+h,rx);
+      ctx.arcTo(x0,y0+h,x0,y0,rx);
+      ctx.arcTo(x0,y0,x0+w,y0,rx);
+      ctx.closePath(); ctx.stroke();
+    });
+  }
+  requestAnimationFrame(tick);
+}
+
+// ---------- play / scrub ----------
+function syncScrub(){
+  const K = (app1?app1.K:60);
+  document.getElementById('scrub').max = K;
+  document.getElementById('scrub').value = k;
+  document.getElementById('scrub-v').textContent = k+' s';
+  updateReadouts();
+}
+document.getElementById('scrub').addEventListener('input', e=>{ k=+e.target.value; document.getElementById('scrub-v').textContent=k+' s'; updateReadouts(); });
+document.getElementById('play').addEventListener('click', ()=>{
+  playing=!playing;
+  document.getElementById('play').textContent = playing?'⏸ Pausa':'▶ Reproducir ciclo';
+  if (playing){ playTimer=setInterval(()=>{ const K=(app1?app1.K:60); k=(k+1)%(K+1); syncScrub(); },110); }
+  else clearInterval(playTimer);
+});
+
+// ---------- init ----------
+let lastSig = null, built = false;
+Thermal.initApp('app2', (state)=>{
   app1 = state.app1 || Thermal.computeApp1();
-  // hidratar config guardada (una vez)
   if (state.app2 && state.app2.streams && !window.__hyd){
     window.__hyd = true;
-    state.app2.streams.forEach(ss => { if (configs[ss.id]) { configs[ss.id].fluid = ss.fluid; configs[ss.id].P_bar = ss.P_bar; } });
+    state.app2.streams.forEach(ss => { if (configs[ss.id]){ configs[ss.id].fluid=ss.fluid; configs[ss.id].P_bar=ss.P_bar; } });
   }
-  // solo recalcular cuando cambian de verdad los datos de App1 (evita bucle de eco)
-  const sig = JSON.stringify(app1.streams.map(s => s.T)) + app1.K;
-  if (sig !== lastSig){ lastSig = sig; ensureBuilt(); recompute(); }
-  else ensureBuilt();
+  if (!built){ built=true; buildCards(); }
+  const sig = JSON.stringify(app1.streams.map(s=>s.T))+app1.K;
+  if (sig!==lastSig){ lastSig=sig; recompute(); }
+  syncScrub();
 });
+requestAnimationFrame(tick);
 </script>
 </body>
 </html>

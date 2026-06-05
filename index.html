@@ -5,112 +5,114 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Hidrolinera Térmica · Suite de Recuperación de Calor</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg:#0b1220; --bg2:#111c33; --card:#ffffff; --ink:#0f172a; --muted:#64748b;
-    --hot:#ef4444; --cold:#3b82f6; --rec:#22c55e; --accent:#0ea5e9;
+    --paper:#eef0f4; --panel:#ffffff; --line:#e4e7ee; --ink:#1d2533; --muted:#6f7889;
+    --accent:#2a3647; --bronze:#b08d57;
+    --hot:#b3492c; --cold:#3a6ea5; --rec:#3f8e6a;
+    --stage:#0e1420; --stage-line:rgba(148,163,184,.16);
   }
   *{ margin:0; padding:0; box-sizing:border-box; }
-  body{ font-family:'Inter',system-ui,sans-serif; color:#e2e8f0;
-        background:radial-gradient(1200px 600px at 50% -10%, #1e293b 0%, var(--bg) 60%); min-height:100vh; }
-  .wrap{ max-width:1400px; margin:0 auto; padding:18px 16px 60px; }
+  body{ font-family:'Inter',system-ui,sans-serif; color:var(--ink); background:var(--paper); min-height:100vh; }
+  h1,h2,h3,h4,.serif{ font-family:'Cormorant Garamond',serif; }
+  .wrap{ max-width:1320px; margin:0 auto; padding:30px 22px 70px; }
 
-  header.top{ display:flex; align-items:center; gap:14px; margin-bottom:18px; }
-  header.top .logo{ font-size:34px; filter:drop-shadow(0 4px 8px rgba(0,0,0,.4)); }
-  header.top h1{ font-size:clamp(20px,3.2vw,30px); font-weight:800; letter-spacing:-.02em;
-                 background:linear-gradient(90deg,#38bdf8,#a78bfa); -webkit-background-clip:text; background-clip:text; color:transparent; }
-  header.top p{ color:#94a3b8; font-size:13px; max-width:680px; }
+  header.top{ margin-bottom:26px; padding-bottom:18px; border-bottom:1px solid var(--line); }
+  header.top .eyebrow{ font-size:11px; letter-spacing:.22em; text-transform:uppercase; color:var(--bronze); font-weight:600; }
+  header.top h1{ font-size:clamp(30px,4vw,46px); font-weight:600; letter-spacing:-.01em; line-height:1.05; margin-top:4px; }
+  header.top p{ color:var(--muted); font-size:14px; max-width:760px; margin-top:8px; line-height:1.6; }
 
-  .section-tag{ display:inline-flex; align-items:center; gap:8px; font-size:12px; font-weight:700; letter-spacing:.08em;
-                text-transform:uppercase; color:#7dd3fc; margin:6px 0 10px; }
-  .section-tag .num{ display:inline-grid; place-items:center; width:22px; height:22px; border-radius:50%;
-                     background:#0ea5e9; color:#04263b; font-size:12px; }
+  .section-tag{ display:flex; align-items:baseline; gap:12px; margin:30px 0 14px; }
+  .section-tag .num{ font-family:'Cormorant Garamond',serif; font-size:30px; font-weight:600; color:var(--bronze); line-height:1; }
+  .section-tag .lbl{ font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); font-weight:600; }
+  .section-tag .ttl{ font-family:'Cormorant Garamond',serif; font-size:24px; font-weight:600; color:var(--ink); }
 
   /* ----- MAIN PROJECT CARD ----- */
-  .main-card{ background:linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
-              border:1px solid rgba(148,163,184,.18); border-radius:20px; padding:18px;
-              box-shadow:0 20px 50px -20px rgba(0,0,0,.6); }
-  .main-grid{ display:grid; grid-template-columns:1.45fr 1fr; gap:18px; }
+  .main-card{ background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:20px;
+              box-shadow:0 18px 40px -28px rgba(20,30,55,.35); }
+  .main-grid{ display:grid; grid-template-columns:1.45fr 1fr; gap:20px; }
   @media (max-width:960px){ .main-grid{ grid-template-columns:1fr; } }
 
-  .stage{ background:#0c1526; border:1px solid rgba(148,163,184,.15); border-radius:16px; padding:8px; position:relative; }
+  .stage{ background:var(--stage); border:1px solid var(--stage-line); border-radius:14px; padding:8px; position:relative; }
   .stage svg{ width:100%; height:auto; display:block; }
 
-  .controls{ display:flex; flex-wrap:wrap; gap:14px 22px; align-items:center; margin:12px 4px 4px; }
-  .controls label{ font-size:12px; color:#cbd5e1; display:flex; align-items:center; gap:8px; }
+  .controls{ display:flex; flex-wrap:wrap; gap:12px 24px; align-items:center; margin:14px 2px 4px; }
+  .controls label{ font-size:12px; color:var(--ink); display:flex; align-items:center; gap:8px; font-weight:500; }
   .controls input[type=range]{ accent-color:var(--accent); }
-  .controls b{ color:#7dd3fc; min-width:46px; }
-  .btn{ border:none; cursor:pointer; border-radius:10px; padding:8px 14px; font-weight:700; font-size:13px;
-        background:var(--accent); color:#04263b; }
-  .btn.ghost{ background:rgba(148,163,184,.15); color:#e2e8f0; }
-  .live{ margin-left:auto; font-size:12px; color:#94a3b8; }
-  .live b{ color:#22c55e; font-size:15px; }
+  .controls b{ color:var(--accent); min-width:44px; font-variant-numeric:tabular-nums; }
+  .btn{ border:none; cursor:pointer; border-radius:9px; padding:8px 15px; font-weight:600; font-size:13px;
+        background:var(--accent); color:#fff; letter-spacing:.01em; }
+  .live{ margin-left:auto; font-size:12px; color:var(--muted); }
+  .live b{ color:var(--rec); font-size:15px; font-variant-numeric:tabular-nums; }
 
   /* metrics */
-  .metrics{ display:grid; grid-template-columns:repeat(2,1fr); gap:10px; }
-  .metric{ background:#0c1526; border:1px solid rgba(148,163,184,.15); border-radius:14px; padding:12px 13px; }
-  .metric .k{ font-size:11px; color:#94a3b8; font-weight:600; display:flex; align-items:center; gap:6px; }
-  .metric .v{ font-size:22px; font-weight:800; margin-top:3px; }
-  .metric .s{ font-size:11px; color:#64748b; }
-  .metric.green .v{ color:#34d399; } .metric.blue .v{ color:#60a5fa; }
-  .metric.amber .v{ color:#fbbf24; } .metric.violet .v{ color:#a78bfa; }
-  .metric.red .v{ color:#f87171; }
+  .metrics{ display:grid; grid-template-columns:repeat(2,1fr); gap:11px; }
+  .metric{ background:#fafbfc; border:1px solid var(--line); border-radius:12px; padding:13px 14px; }
+  .metric .k{ font-size:11px; color:var(--muted); font-weight:600; letter-spacing:.02em; }
+  .metric .v{ font-family:'Cormorant Garamond',serif; font-size:28px; font-weight:600; margin-top:2px; line-height:1.05; color:var(--ink); }
+  .metric .s{ font-size:11px; color:var(--muted); margin-top:1px; }
+  .metric.green .v{ color:var(--rec); } .metric.blue .v{ color:var(--cold); }
+  .metric.amber .v{ color:#b3823c; } .metric.violet .v{ color:#6d6aa8; }
+  .metric.red .v{ color:var(--hot); }
+  .metric .k::before{ content:""; display:inline-block; width:7px; height:7px; border-radius:50%; margin-right:7px; vertical-align:middle; background:#cbd2dd; }
+  .metric.green .k::before{ background:var(--rec);} .metric.blue .k::before{ background:var(--cold);}
+  .metric.amber .k::before{ background:#b3823c;} .metric.violet .k::before{ background:#6d6aa8;} .metric.red .k::before{ background:var(--hot);}
 
-  .bars{ margin-top:12px; background:#0c1526; border:1px solid rgba(148,163,184,.15); border-radius:14px; padding:12px 13px; }
-  .bars h4{ font-size:12px; color:#cbd5e1; margin-bottom:8px; }
-  .barrow{ margin-bottom:9px; }
-  .barrow .lab{ display:flex; justify-content:space-between; font-size:11px; color:#94a3b8; margin-bottom:3px; }
-  .track{ height:14px; border-radius:8px; background:#1e293b; overflow:hidden; display:flex; }
-  .track .rec{ background:linear-gradient(90deg,#16a34a,#22c55e); }
-  .track .util{ background:linear-gradient(90deg,#475569,#64748b); }
+  .bars{ margin-top:14px; background:#fafbfc; border:1px solid var(--line); border-radius:12px; padding:13px 14px; }
+  .bars h4{ font-size:16px; font-weight:600; color:var(--ink); margin-bottom:10px; }
+  .barrow{ margin-bottom:11px; }
+  .barrow .lab{ display:flex; justify-content:space-between; font-size:11px; color:var(--muted); margin-bottom:4px; }
+  .track{ height:13px; border-radius:7px; background:#e7eaf0; overflow:hidden; display:flex; }
+  .track .rec{ background:var(--rec); }
+  .track .util{ background:#9aa3b2; }
 
   /* SVG animation */
   @keyframes dash{ to{ stroke-dashoffset:-28; } }
   .flow{ stroke-dasharray:9 7; animation:dash .55s linear infinite; }
 
   /* ----- 4 APPS GRID ----- */
-  .appgrid{ display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:8px; }
+  .appgrid{ display:grid; grid-template-columns:1fr 1fr; gap:18px; margin-top:6px; }
   @media (max-width:760px){ .appgrid{ grid-template-columns:1fr; } }
-  .tile{ background:#0c1526; border:1px solid rgba(148,163,184,.18); border-radius:16px; overflow:hidden;
-         display:flex; flex-direction:column; transition:box-shadow .2s; }
-  .tile:hover{ box-shadow:0 0 0 2px rgba(14,165,233,.35); }
-  .tile-head{ display:flex; align-items:center; gap:8px; padding:9px 12px; cursor:pointer;
-              background:linear-gradient(90deg, rgba(14,165,233,.10), transparent); border-bottom:1px solid rgba(148,163,184,.12); }
-  .tile-head .ico{ font-size:18px; }
-  .tile-head .ttl{ font-weight:700; font-size:13px; color:#e2e8f0; }
-  .tile-head .sub{ font-size:11px; color:#7dd3fc; }
-  .tile-head .exp{ margin-left:auto; font-size:12px; color:#94a3b8; background:rgba(148,163,184,.15);
-                   border-radius:8px; padding:4px 8px; }
+  .tile{ background:var(--panel); border:1px solid var(--line); border-radius:14px; overflow:hidden;
+         display:flex; flex-direction:column; transition:box-shadow .2s, border-color .2s; box-shadow:0 10px 26px -24px rgba(20,30,55,.4); }
+  .tile:hover{ border-color:var(--bronze); box-shadow:0 14px 30px -22px rgba(20,30,55,.5); }
+  .tile-head{ display:flex; align-items:center; gap:10px; padding:11px 14px; cursor:pointer;
+              border-bottom:1px solid var(--line); }
+  .tile-head .ico{ display:inline-flex; }
+  .tile-head .ttl{ font-family:'Cormorant Garamond',serif; font-weight:600; font-size:18px; color:var(--ink); line-height:1; }
+  .tile-head .sub{ font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:var(--bronze); font-weight:600; }
+  .tile-head .exp{ margin-left:auto; font-size:11px; color:var(--muted); border:1px solid var(--line);
+                   border-radius:7px; padding:4px 9px; font-weight:500; }
   .tile-body{ flex:1; min-height:0; }
-  .tile iframe{ width:100%; height:340px; border:0; background:#f8fafc; display:block; }
+  .tile iframe{ width:100%; height:360px; border:0; background:#fff; display:block; }
 
   /* expanded */
-  #backdrop{ position:fixed; inset:0; background:rgba(2,6,23,.7); backdrop-filter:blur(3px); z-index:40; display:none; }
+  #backdrop{ position:fixed; inset:0; background:rgba(20,28,45,.5); backdrop-filter:blur(3px); z-index:40; display:none; }
   #backdrop.show{ display:block; }
-  .tile.expanded{ position:fixed; inset:3vh 3vw; z-index:50; box-shadow:0 30px 80px -20px rgba(0,0,0,.8); }
-  .tile.expanded iframe{ height:calc(94vh - 46px); }
-  .tile.expanded .exp{ background:#ef4444; color:#fff; }
+  .tile.expanded{ position:fixed; inset:3vh 3vw; z-index:50; box-shadow:0 40px 90px -30px rgba(20,30,55,.6); }
+  .tile.expanded iframe{ height:calc(94vh - 48px); }
+  .tile.expanded .exp{ background:var(--hot); color:#fff; border-color:var(--hot); }
 
-  .foot{ margin-top:26px; color:#64748b; font-size:12px; text-align:center; line-height:1.6; }
-  .legend{ display:flex; gap:16px; flex-wrap:wrap; justify-content:center; margin-top:8px; font-size:11px; color:#94a3b8; }
+  .foot{ margin-top:30px; padding-top:18px; border-top:1px solid var(--line); color:var(--muted); font-size:12px; text-align:center; line-height:1.7; }
+  .legend{ display:flex; gap:18px; flex-wrap:wrap; justify-content:center; margin-top:10px; font-size:11px; color:var(--muted); }
   .legend span{ display:inline-flex; align-items:center; gap:6px; }
-  .dot{ width:10px; height:10px; border-radius:50%; display:inline-block; }
+  .dot{ width:9px; height:9px; border-radius:50%; display:inline-block; }
+  .swatch{ width:16px; height:3px; border-radius:2px; display:inline-block; }
 </style>
 </head>
 <body>
 <div class="wrap">
 
   <header class="top">
-    <div class="logo">⛽</div>
-    <div>
-      <h1>Hidrolinera Térmica</h1>
-      <p>Divulgación interactiva de la síntesis de redes de intercambiadores en sistemas térmicos transitorios. Configura los 4 módulos y observa cómo la <b style="color:#34d399">red recupera el calor residual</b> de la estación de hidrógeno.</p>
-    </div>
+    <div class="eyebrow">Estación de repostaje de hidrógeno · Integración energética</div>
+    <h1>Hidrolinera Térmica</h1>
+    <p>Divulgación interactiva de la síntesis de redes de intercambiadores en sistemas térmicos transitorios. Configura los cuatro módulos y observa cómo la red <b style="color:var(--rec)">recupera el calor residual</b> de la estación de hidrógeno.</p>
   </header>
 
   <!-- =================== PROYECTO PRINCIPAL =================== -->
-  <div class="section-tag"><span class="num">★</span> Proyecto principal · Simulación de la red</div>
+  <div class="section-tag"><span class="num">I</span><div><div class="lbl">Proyecto principal</div><div class="ttl">Simulación de la red de recuperación</div></div></div>
   <div class="main-card">
     <div class="main-grid">
       <!-- escenario -->
@@ -119,15 +121,15 @@
         <div class="controls">
           <label>ΔT mín <input id="dtmin" type="range" min="2" max="30" step="1" value="10"><b id="dtmin-v">10 °C</b></label>
           <label>Repostajes/día <input id="cpd" type="range" min="10" max="200" step="5" value="50"><b id="cpd-v">50</b></label>
-          <label>⏱️ <input id="mscrub" type="range" min="0" max="60" step="1" value="0"><b id="mscrub-v">0s</b></label>
+          <label>Instante <input id="mscrub" type="range" min="0" max="60" step="1" value="0"><b id="mscrub-v">0s</b></label>
           <button id="mplay" class="btn">▶ Ciclo</button>
           <div class="live">Potencia recuperada ahora: <b id="livekw">0 kW</b></div>
         </div>
         <div class="legend">
-          <span><span class="dot" style="background:#ef4444"></span>Foco caliente</span>
-          <span><span class="dot" style="background:#3b82f6"></span>Demanda fría</span>
-          <span><span class="dot" style="background:#22c55e"></span>Calor recuperado (intercambiador)</span>
-          <span><span class="dot" style="background:#64748b"></span>Utility externa</span>
+          <span><span class="dot" style="background:var(--hot)"></span>Fuente de calor</span>
+          <span><span class="dot" style="background:var(--cold)"></span>Demanda de calor</span>
+          <span><span class="swatch" style="background:var(--rec)"></span>Calor recuperado (intercambiador)</span>
+          <span><span class="swatch" style="background:#9aa3b2"></span>Apoyo externo (utility)</span>
         </div>
       </div>
       <!-- panel de resultados -->
@@ -139,29 +141,29 @@
   </div>
 
   <!-- =================== 4 APPS =================== -->
-  <div class="section-tag" style="margin-top:26px"><span class="num">4</span> Módulos de configuración · pulsa una tarjeta para ampliarla</div>
+  <div class="section-tag"><span class="num">II</span><div><div class="lbl">Módulos de configuración</div><div class="ttl">Pulsa una tarjeta para ampliarla e interactuar</div></div></div>
   <div class="appgrid" id="appgrid">
     <div class="tile" data-app="app1">
-      <div class="tile-head"><span class="ico">🌡️</span><div><div class="ttl">Trayectorias</div><div class="sub">Módulo 1</div></div><span class="exp">⤢ Ampliar</span></div>
+      <div class="tile-head"><span class="ico" id="ico-1"></span><div><div class="ttl">Trayectorias térmicas</div><div class="sub">Módulo 1</div></div><span class="exp">⤢ Ampliar</span></div>
       <div class="tile-body"><iframe class="appframe" src="App1.html" title="App 1"></iframe></div>
     </div>
     <div class="tile" data-app="app2">
-      <div class="tile-head"><span class="ico">⚗️</span><div><div class="ttl">Propiedades & Exergía</div><div class="sub">Módulo 2</div></div><span class="exp">⤢ Ampliar</span></div>
+      <div class="tile-head"><span class="ico" id="ico-2"></span><div><div class="ttl">Propiedades del H₂</div><div class="sub">Módulo 2</div></div><span class="exp">⤢ Ampliar</span></div>
       <div class="tile-body"><iframe class="appframe" src="App2.html" title="App 2"></iframe></div>
     </div>
     <div class="tile" data-app="app3">
-      <div class="tile-head"><span class="ico">🌍</span><div><div class="ttl">Pérdidas Ambientales</div><div class="sub">Módulo 3</div></div><span class="exp">⤢ Ampliar</span></div>
+      <div class="tile-head"><span class="ico" id="ico-3"></span><div><div class="ttl">Pérdidas ambientales</div><div class="sub">Módulo 3</div></div><span class="exp">⤢ Ampliar</span></div>
       <div class="tile-body"><iframe class="appframe" src="App3.html" title="App 3"></iframe></div>
     </div>
     <div class="tile" data-app="app4">
-      <div class="tile-head"><span class="ico">🛡️</span><div><div class="ttl">Seguridad & Límites</div><div class="sub">Módulo 4</div></div><span class="exp">⤢ Ampliar</span></div>
+      <div class="tile-head"><span class="ico" id="ico-4"></span><div><div class="ttl">Seguridad y límites</div><div class="sub">Módulo 4</div></div><span class="exp">⤢ Ampliar</span></div>
       <div class="tile-body"><iframe class="appframe" src="App4.html" title="App 4"></iframe></div>
     </div>
   </div>
 
   <div class="foot">
     Trabajo de divulgación · Síntesis de redes de intercambiadores de calor en sistemas térmicos transitorios.<br>
-    Los 4 módulos se comunican en vivo con la simulación principal mediante <code>localStorage</code> + <code>postMessage</code>.
+    Los cuatro módulos se comunican en vivo con la simulación principal mediante <code>localStorage</code> + <code>postMessage</code>.
   </div>
 </div>
 
@@ -195,23 +197,29 @@ function render(){
   updateFrame(mscrub);
 }
 
+function glyphAt(id, cx, cy, size, color){
+  const sc = size / 24;
+  return `<g transform="translate(${(cx-size/2).toFixed(1)},${(cy-size/2).toFixed(1)}) scale(${sc.toFixed(3)})" fill="none" stroke="${color}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${Thermal.glyph(id)}</g>`;
+}
+
 function tankNode(id){
   const s = Thermal.stationById(id); const p = POS[id];
   return `<g>
-    <rect id="tank-${id}" x="${p.x-62}" y="${p.y-30}" width="124" height="60" rx="13"
-          fill="#0c1526" fill-opacity="1" stroke="${s.color}" stroke-width="2.5"/>
-    <rect id="tankt-${id}" x="${p.x-62}" y="${p.y-30}" width="124" height="60" rx="13"
+    <rect id="tank-${id}" x="${p.x-64}" y="${p.y-31}" width="128" height="62" rx="12"
+          fill="#0e1622" stroke="${s.color}" stroke-width="2"/>
+    <rect id="tankt-${id}" x="${p.x-64}" y="${p.y-31}" width="128" height="62" rx="12"
           fill="${s.color}" fill-opacity="0.12" stroke="none"/>
-    <text x="${p.x}" y="${p.y-7}" text-anchor="middle" font-size="13" font-weight="700" fill="#e2e8f0">${s.icon} ${s.name}</text>
-    <text id="temp-${id}" x="${p.x}" y="${p.y+15}" text-anchor="middle" font-size="15" font-weight="800" fill="${s.color}">--</text>
+    ${glyphAt(id, p.x-48, p.y-9, 17, s.color)}
+    <text x="${p.x+8}" y="${p.y-4}" text-anchor="middle" font-size="12.5" font-weight="600" fill="#dfe3ea">${s.short}</text>
+    <text id="temp-${id}" x="${p.x}" y="${p.y+17}" text-anchor="middle" font-size="15" font-weight="700" fill="${s.color}">--</text>
   </g>`;
 }
 
-function utilBox(id, label, emoji, color){
+function utilBox(id, label, color){
   const p = POS[id];
   return `<g>
-    <rect x="${p.x-70}" y="${p.y-20}" width="140" height="40" rx="10" fill="#0c1526" stroke="${color}" stroke-width="2"/>
-    <text x="${p.x}" y="${p.y+5}" text-anchor="middle" font-size="12.5" font-weight="700" fill="#cbd5e1">${emoji} ${label}</text>
+    <rect x="${p.x-70}" y="${p.y-19}" width="140" height="38" rx="9" fill="#0e1622" stroke="${color}" stroke-width="1.6"/>
+    <text x="${p.x}" y="${p.y+4}" text-anchor="middle" font-size="12.5" font-weight="600" fill="#cdd3de" letter-spacing="0.3">${label}</text>
   </g>`;
 }
 
@@ -220,8 +228,8 @@ function buildDiagram(){
   let s = '';
 
   // utilities
-  s += utilBox('tower','Refrigeración', '❄️', '#38bdf8');
-  s += utilBox('boiler','Caldera auxiliar', '🔥', '#fb923c');
+  s += utilBox('tower','Refrigeración', '#5aa9d6');
+  s += utilBox('boiler','Caldera auxiliar', '#c98a4a');
 
   // arrows hot->tower  (cooling leftover) & boiler->cold (heating leftover)
   const a1 = synth.app1;
@@ -261,9 +269,9 @@ function buildDiagram(){
     const h=POS[m.h], c=POS[m.c], hb=POS.hub;
     const d = `M ${h.x+ (h.x<hb.x?62:-62)} ${h.y} Q ${hb.x} ${hb.y} ${c.x+ (c.x<hb.x?62:-62)} ${c.y}`;
     const w = 2 + 6*m.energy_kWh/maxE;
-    s += `<path id="link-${i}" d="${d}" fill="none" stroke="#22c55e" stroke-width="${w.toFixed(1)}" stroke-opacity="0.25" stroke-linecap="round"/>`;
+    s += `<path id="link-${i}" d="${d}" fill="none" stroke="#3f8e6a" stroke-width="${w.toFixed(1)}" stroke-opacity="0.22" stroke-linecap="round"/>`;
     // moving dot
-    s += `<circle id="dot-${i}" r="4.5" fill="#bbf7d0" opacity="0">
+    s += `<circle id="dot-${i}" r="4.2" fill="#7fc49c" opacity="0">
             <animateMotion dur="${(1.6+0.5*i).toFixed(1)}s" repeatCount="indefinite" path="${d}"/>
           </circle>`;
   });
@@ -271,9 +279,9 @@ function buildDiagram(){
   // hub node
   const hb=POS.hub;
   s += `<g>
-    <circle cx="${hb.x}" cy="${hb.y}" r="30" fill="#0c1526" stroke="#22c55e" stroke-width="2.5"/>
-    <text x="${hb.x}" y="${hb.y-2}" text-anchor="middle" font-size="18">♨️</text>
-    <text x="${hb.x}" y="${hb.y+15}" text-anchor="middle" font-size="9" fill="#94a3b8" font-weight="700">HEN</text>
+    <circle cx="${hb.x}" cy="${hb.y}" r="29" fill="#0e1622" stroke="#3f8e6a" stroke-width="2"/>
+    <text x="${hb.x}" y="${hb.y+1}" text-anchor="middle" font-size="20" font-weight="700" fill="#7fc49c">⇄</text>
+    <text x="${hb.x}" y="${hb.y+16}" text-anchor="middle" font-size="8.5" fill="#9aa3b2" font-weight="600" letter-spacing="1">RED</text>
   </g>`;
 
   // tanks
@@ -320,14 +328,14 @@ function updateMetrics(){
   const worst = m.worst_id ? Thermal.stationById(m.worst_id) : null;
   const safeColor = m.worst_ttl<25?'red':(m.worst_ttl<90?'amber':'green');
   const cards = [
-    ['green','♨️ Calor recuperado', Thermal.fmt(m.recovered,2)+' kWh', 'por ciclo de repostaje'],
-    ['violet','📈 Recuperación', m.recoveryPct.toFixed(0)+' %', 'del calor gestionado'],
-    ['blue','❄️ Refrigeración externa', Thermal.fmt(m.hotUtility,2)+' kWh', 'utility que aún hace falta'],
-    ['amber','🔥 Calefacción externa', Thermal.fmt(m.coldUtility,2)+' kWh', 'utility que aún hace falta'],
-    ['violet','⚡ Exergía destruida', Thermal.fmt(m.exDestroyed,3)+' kWh', 'irreversibilidad de la red'],
-    [safeColor,'🛡️ Margen de seguridad', safeTxt, worst? ('crítico: '+worst.name):'sin riesgo'],
-    ['green','🌱 Ahorro CO₂', Thermal.fmt(m.co2_t_y,1)+' t/año', Thermal.fmt(m.recovered_MWh_y,0)+' MWh/año'],
-    ['green','💶 Ahorro económico', Thermal.fmt(m.euros_y,0)+' €/año', 'a '+synth.cyclesPerDay+' repostajes/día'],
+    ['green','Calor recuperado', Thermal.fmt(m.recovered,2)+' kWh', 'por ciclo de repostaje'],
+    ['violet','Tasa de recuperación', m.recoveryPct.toFixed(0)+' %', 'del calor gestionado'],
+    ['blue','Refrigeración externa', Thermal.fmt(m.hotUtility,2)+' kWh', 'utility que aún hace falta'],
+    ['amber','Calefacción externa', Thermal.fmt(m.coldUtility,2)+' kWh', 'utility que aún hace falta'],
+    ['violet','Exergía destruida', Thermal.fmt(m.exDestroyed,3)+' kWh', 'irreversibilidad de la red'],
+    [safeColor,'Margen de seguridad', safeTxt, worst? ('crítico: '+(worst.short||worst.name)):'sin riesgo'],
+    ['green','Ahorro de CO₂', Thermal.fmt(m.co2_t_y,1)+' t/año', Thermal.fmt(m.recovered_MWh_y,0)+' MWh/año'],
+    ['green','Ahorro económico', Thermal.fmt(m.euros_y,0)+' €/año', 'a '+synth.cyclesPerDay+' repostajes/día'],
   ];
   document.getElementById('metrics').innerHTML = cards.map(c=>`
     <div class="metric ${c[0]}">
@@ -396,6 +404,18 @@ backdrop.addEventListener('click', ()=>{
   document.querySelectorAll('.tile.expanded').forEach(t=>{ t.classList.remove('expanded'); t.querySelector('.exp').textContent='⤢ Ampliar'; });
   backdrop.classList.remove('show');
 });
+
+/* ================= iconos de las tarjetas ================= */
+function lineIcon(inner){
+  return `<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#2a3647" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${inner}</svg>`;
+}
+const tileIcons = {
+  '1': lineIcon('<path d="M4 4v16h16"/><path d="M7 14l3-3 3 2 5-6"/>'),
+  '2': lineIcon('<circle cx="8.2" cy="12" r="3.1"/><circle cx="15.8" cy="12" r="3.1"/><path d="M11.3 12h1.4"/>'),
+  '3': lineIcon('<circle cx="12" cy="12" r="8"/><path d="M4 12h16"/><path d="M12 4c3 3 3 13 0 16M12 4c-3 3-3 13 0 16"/>'),
+  '4': lineIcon('<path d="M12 3l7 3v5c0 5-3.5 8-7 9-3.5-1-7-4-7-9V6z"/><path d="M9 12l2 2 4-4"/>')
+};
+['1','2','3','4'].forEach(n=>{ const e=document.getElementById('ico-'+n); if(e) e.innerHTML=tileIcons[n]; });
 
 /* primer render */
 render();

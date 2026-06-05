@@ -6,36 +6,39 @@
 <title>App 4 · Seguridad & Límites</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
-  body{ font-family:'Inter',system-ui,sans-serif; }
-  ::-webkit-scrollbar{ width:7px;height:7px; }
-  ::-webkit-scrollbar-thumb{ background:#cbd5e1;border-radius:4px; }
-  input[type=range]{ accent-color:#dc2626; }
-  .glass{ background:rgba(255,255,255,.85); backdrop-filter:blur(6px); }
-  @keyframes pulse2 { 0%,100%{ opacity:1 } 50%{ opacity:.35 } }
-  .crit{ animation:pulse2 1s infinite; }
+  :root{ --ink:#1d2533; --muted:#6f7889; --line:#e4e7ee; --accent:#2a3647; --bronze:#b08d57; }
+  body{ font-family:'Inter',system-ui,sans-serif; background:#eef0f4; color:var(--ink); }
+  h1,h2,h3,h4{ font-family:'Cormorant Garamond',serif; }
+  ::-webkit-scrollbar{ width:8px;height:8px; }
+  ::-webkit-scrollbar-thumb{ background:#cdd3dd;border-radius:4px; }
+  input[type=range]{ accent-color:var(--accent); }
+  .glass{ background:#fff !important; border-color:var(--line) !important; backdrop-filter:none; }
+  .eyebrow{ font-size:11px; letter-spacing:.18em; text-transform:uppercase; color:var(--bronze); font-weight:600; }
+  @keyframes pulse2 { 0%,100%{ opacity:1 } 50%{ opacity:.4 } }
+  .crit{ animation:pulse2 1.1s infinite; }
 </style>
 </head>
-<body class="bg-gradient-to-br from-rose-50 to-slate-200 text-slate-800 min-h-screen">
+<body class="min-h-screen">
 
-<div class="p-3 sm:p-4 max-w-[1500px] mx-auto">
-  <header class="flex items-center gap-3 mb-3">
-    <div class="text-3xl">🛡️</div>
-    <div>
-      <h1 class="text-lg sm:text-xl font-extrabold text-slate-900 leading-tight">Seguridad & Límites</h1>
-      <p class="text-xs text-slate-500">¿Cuánto tiempo falta para que cada componente choque con un límite térmico crítico?</p>
-    </div>
+<div class="p-4 sm:p-6 max-w-[1500px] mx-auto">
+  <header class="mb-4 pb-3 border-b" style="border-color:var(--line)">
+    <div class="eyebrow">Módulo 4 — Operación segura</div>
+    <h1 class="text-3xl sm:text-4xl font-semibold leading-tight">Seguridad y Límites</h1>
+    <p class="text-sm text-[color:var(--muted)] mt-1">¿Cuánto tiempo falta para que cada componente choque con un límite térmico crítico?</p>
   </header>
 
   <!-- límites globales -->
-  <div class="glass rounded-xl border border-slate-200 p-3 mb-3 grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
-    <label class="block">🔴 T máx crítica <b id="d-tmax" class="float-right text-red-600">85°C</b>
+  <div class="glass rounded-xl border p-3 mb-4 grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
+    <label class="block">T máx crítica <b id="d-tmax" class="float-right" style="color:#b3492c">85°C</b>
       <input id="tmax" type="range" min="50" max="150" step="1" value="85" class="w-full">
     </label>
-    <label class="block">🔵 T mín crítica <b id="d-tmin" class="float-right text-blue-600">-40°C</b>
+    <label class="block">T mín crítica <b id="d-tmin" class="float-right" style="color:#3a6ea5">-40°C</b>
       <input id="tmin" type="range" min="-60" max="20" step="1" value="-40" class="w-full">
     </label>
-    <label class="block">⏳ Bloque de control <b id="d-hold" class="float-right text-slate-700">10 s</b>
+    <label class="block">Bloque de control <b id="d-hold" class="float-right" style="color:var(--accent)">10 s</b>
       <input id="hold" type="range" min="2" max="20" step="1" value="10" class="w-full">
     </label>
   </div>
@@ -78,8 +81,8 @@ function gauge(r){
   return `
     <div class="glass rounded-xl border p-3 ${bg} ${anim}">
       <div class="flex items-center gap-2 mb-1">
-        <span class="text-lg">${r.icon}</span>
-        <span class="text-xs font-bold text-slate-700 truncate">${r.name}</span>
+        <span style="color:${r.color}">${Thermal.glyphSVG(r.id,17,r.color)}</span>
+        <span class="text-xs font-semibold text-slate-700 truncate">${(Thermal.stationById(r.id)||{}).short||r.name}</span>
       </div>
       <svg viewBox="0 0 120 70" class="w-full">
         <path d="M14,58 A46,46 0 0,1 106,58" fill="none" stroke="#e2e8f0" stroke-width="9" stroke-linecap="round"/>

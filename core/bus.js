@@ -37,36 +37,48 @@
   // ---------------------------------------------------------------------
   const STATION = [
     {
-      id: 'compresor', name: 'Compresor H₂', icon: '⚙️', role: 'hot', color: '#ef4444',
-      blurb: 'La compresión del hidrógeno genera mucho calor residual.',
+      id: 'compresor', name: 'Compresor H₂', short: 'Compresor', icon: '⚙', role: 'hot', color: '#b3492c',
+      blurb: 'La compresión del hidrógeno genera calor residual aprovechable.',
       def: { profile: 'exp', T_init: 120, T_final: 58, mCp: 45000, amp: 6, freq: 0.06 },
-      app2: { fluid: 'H2', P_bar: 700 },
+      app2: { fluid: 'H2', P_bar: 900 },
       app3: { volume: 0.8, geometry: 'cylinder', k_solid: 50, h_conv: 100, h_amb: 6 }
     },
     {
-      id: 'repostaje', name: 'Gas de Repostaje', icon: '🔥', role: 'hot', color: '#f97316',
-      blurb: 'El gas se calienta al llenar el depósito del vehículo (SAE J2601).',
+      id: 'repostaje', name: 'Depósito del vehículo', short: 'Depósito veh.', icon: '⛽', role: 'hot', color: '#4f8a8b',
+      blurb: 'El depósito del vehículo se calienta por compresión durante el llenado y cede calor recuperable.',
       def: { profile: 'smooth', T_init: 95, T_final: 42, mCp: 30000, amp: 5, freq: 0.05 },
-      app2: { fluid: 'H2', P_bar: 350 },
+      app2: { fluid: 'H2', P_bar: 700 },
       app3: { volume: 0.4, geometry: 'cylinder', k_solid: 200, h_conv: 90, h_amb: 7 }
     },
     {
-      id: 'acs', name: 'Agua Sanitaria', icon: '🚿', role: 'cold', color: '#3b82f6',
-      blurb: 'Agua caliente sanitaria del edificio: necesita aporte de calor.',
+      id: 'acs', name: 'Almacenamiento gaseoso de H₂', short: 'Almacén H₂', icon: '⬢', role: 'cold', color: '#3a6ea5',
+      blurb: 'Los tanques de almacenamiento de H₂ a alta presión.',
       def: { profile: 'linear', T_init: 14, T_final: 58, mCp: 60000, amp: 4, freq: 0.04 },
-      app2: { fluid: 'water', P_bar: 3 },
+      app2: { fluid: 'H2', P_bar: 500 },
       app3: { volume: 1.5, geometry: 'cylinder', k_solid: 60, h_conv: 200, h_amb: 4 }
     },
     {
-      id: 'clima', name: 'Climatización', icon: '🏢', role: 'cold', color: '#10b981',
-      blurb: 'Climatización del edificio: demanda térmica recuperable.',
-      def: { profile: 'sin', T_init: 18, T_final: 40, mCp: 40000, amp: 6, freq: 0.05 },
-      app2: { fluid: 'glycol', P_bar: 3 },
+      id: 'clima', name: 'Almacenamiento de hidruros', short: 'Hidruros', icon: 'H₂', role: 'cold', color: '#cf8a3c',
+      blurb: 'Los hidruros metálicos necesitan calor externo para liberar el H₂ almacenado.',
+      def: { profile: 'sin', T_init: 18, T_final: 45, mCp: 40000, amp: 6, freq: 0.05 },
+      app2: { fluid: 'H2', P_bar: 700 },
       app3: { volume: 1.0, geometry: 'sphere', k_solid: 30, h_conv: 400, h_amb: 5 }
     }
   ];
 
   function stationById(id) { return STATION.find(s => s.id === id); }
+
+  // Iconos vectoriales monocromos (24x24, stroke=currentColor) — estética sobria
+  const GLYPH = {
+    compresor: '<circle cx="12" cy="12" r="7.2"/><path d="M12 4.8v7.2l5.1 2.9"/><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"/>',
+    repostaje: '<path d="M3.5 13.5l2.2-4.8h9.4l2.9 4.8"/><path d="M3 13.5h17v3.4H3z"/><circle cx="7" cy="17.4" r="1.7"/><circle cx="16" cy="17.4" r="1.7"/>',
+    acs: '<rect x="7.2" y="5.4" width="9.6" height="14.4" rx="4.2"/><path d="M10 5.4V3.6h4v1.8"/><path d="M9 15.5h6"/><path d="M9 11.5h6"/>',
+    clima: '<circle cx="8.2" cy="12" r="3.1"/><circle cx="15.8" cy="12" r="3.1"/><path d="M11.3 12h1.4"/>'
+  };
+  function glyph(id) { return GLYPH[id] || ''; }
+  function glyphSVG(id, size, color) {
+    return `<svg viewBox="0 0 24 24" width="${size}" height="${size}" fill="none" stroke="${color || 'currentColor'}" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle">${glyph(id)}</svg>`;
+  }
 
   // ---------------------------------------------------------------------
   // 2. Correlaciones termofísicas (ligeras, suficientes para divulgación)
@@ -114,10 +126,11 @@
   // Mapea una temperatura (°C) a un color azul(frío)->verde(ambiente)->rojo(caliente)
   function colorForTemp(tC, lo = -45, hi = 95) {
     const x = Math.max(0, Math.min(1, (tC - lo) / (hi - lo)));
-    // hue: 210 (azul) -> 0 (rojo)
+    // hue: 210 (azul) -> 0 (rojo), saturación contenida para un look sobrio
     const hue = 210 * (1 - x);
-    const light = 52 - 8 * x;
-    return `hsl(${hue.toFixed(0)}, 85%, ${light.toFixed(0)}%)`;
+    const sat = 58 + 6 * x;
+    const light = 54 - 6 * x;
+    return `hsl(${hue.toFixed(0)}, ${sat.toFixed(0)}%, ${light.toFixed(0)}%)`;
   }
   function fmt(n, d = 1) {
     if (!isFinite(n)) return '∞';
@@ -505,6 +518,8 @@
   global.Thermal = {
     // constantes
     T0, P0, R_H2, KEY_MAP, STATION, stationById,
+    // iconos
+    glyph, glyphSVG,
     // física
     props, colorForTemp, fmt,
     // cálculo por capas
