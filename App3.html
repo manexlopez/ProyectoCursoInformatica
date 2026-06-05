@@ -1,494 +1,201 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>App 3: Auditor de Pérdidas Ambientales y Régimen de Biot</title>
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        /* Estilos personalizados para inputs tipo rango */
-        input[type=range] {
-            accent-color: #3b82f6; /* Tailwind blue-500 */
-        }
-        .toast-enter {
-            transform: translateY(100%);
-            opacity: 0;
-        }
-        .toast-enter-active {
-            transform: translateY(0);
-            opacity: 1;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        .toast-leave-active {
-            transform: translateY(100%);
-            opacity: 0;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>App 3 · Pérdidas Ambientales</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+  body{ font-family:'Inter',system-ui,sans-serif; }
+  ::-webkit-scrollbar{ width:7px;height:7px; }
+  ::-webkit-scrollbar-thumb{ background:#cbd5e1;border-radius:4px; }
+  input[type=range]{ accent-color:#0d9488; }
+  .glass{ background:rgba(255,255,255,.85); backdrop-filter:blur(6px); }
+  @keyframes wave { 0%{ transform:scale(.6); opacity:.7 } 100%{ transform:scale(1.6); opacity:0 } }
+  .wave{ animation:wave 2s ease-out infinite; transform-origin:center; }
+</style>
 </head>
-<body class="bg-gray-100 text-gray-800 font-sans min-h-screen p-4 md:p-8">
+<body class="bg-gradient-to-br from-teal-50 to-slate-200 text-slate-800 min-h-screen">
 
-    <div class="max-w-7xl mx-auto space-y-6">
-        <!-- Header -->
-        <header class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-            <h1 class="text-3xl font-bold text-gray-900 mb-2">Auditor de Pérdidas Ambientales y Régimen de Biot</h1>
-            <p class="text-gray-600">Evaluación de hipótesis de parámetros agrupados e interacción térmica con el entorno basado en perfiles transitorios.</p>
-        </header>
-
-        <!-- Warning Message (Si no hay datos) -->
-        <div id="warning-container" class="hidden bg-yellow-50 border-l-4 border-yellow-400 p-6 rounded-r-xl shadow-sm">
-            <div class="flex items-center">
-                <div class="flex-shrink-0">
-                    <svg class="h-6 w-6 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
-                    </svg>
-                </div>
-                <div class="ml-3">
-                    <h3 class="text-lg font-medium text-yellow-800">Datos no encontrados</h3>
-                    <div class="mt-2 text-yellow-700">
-                        <p>No se encontró la clave "suite_thermal_data_enriched" en el almacenamiento local. Por favor, completa primero las aplicaciones 1 y 2.</p>
-                    </div>
-                    <div class="mt-4">
-                        <button onclick="injectMockData()" class="bg-yellow-100 hover:bg-yellow-200 text-yellow-800 font-semibold py-2 px-4 border border-yellow-300 rounded shadow-sm transition-colors text-sm">
-                            Generar Datos de Prueba (Simular App 1 y 2)
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Main Content Area -->
-        <div id="main-content" class="hidden flex flex-col lg:flex-row gap-6">
-            
-            <!-- Left Column: Controles de Corrientes -->
-            <div class="w-full lg:w-5/12 space-y-4" id="streams-container">
-                <h2 class="text-xl font-semibold text-gray-800 px-2">Configuración de Depósitos</h2>
-                <!-- Los paneles de corrientes se inyectarán aquí vía JS -->
-            </div>
-
-            <!-- Right Column: Gráficos y Exportación -->
-            <div class="w-full lg:w-7/12 space-y-6">
-                <!-- Panel de Exportación -->
-                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 flex justify-between items-center">
-                    <div>
-                        <h3 class="font-semibold text-lg text-gray-800">Exportación de Resultados</h3>
-                        <p class="text-sm text-gray-500">Guarda el perfil térmico consolidado con los datos ambientales.</p>
-                    </div>
-                    <button onclick="exportData()" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg shadow-md transition-colors flex items-center gap-2">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>
-                        Guardar Perfil
-                    </button>
-                </div>
-
-                <!-- Gráfico de Áreas -->
-                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-                    <h3 class="font-semibold text-gray-800 mb-4">Comparativa de Área Superficial Calculada</h3>
-                    <div class="relative h-64 w-full">
-                        <canvas id="areaChart"></canvas>
-                    </div>
-                    <p class="text-xs text-gray-500 mt-2 text-center">Visualiza el error de subestimación de usar el modelo esférico clásico vs la geometría real.</p>
-                </div>
-
-                <!-- Gráfico de Pérdidas Transitorias -->
-                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-                    <h3 class="font-semibold text-gray-800 mb-4">Pérdidas Térmicas hacia el Ambiente <span class="text-sm font-normal text-gray-500">(Q_amb vs t)</span></h3>
-                    <div class="relative h-80 w-full">
-                        <canvas id="lossChart"></canvas>
-                    </div>
-                </div>
-            </div>
-        </div>
+<div class="p-3 sm:p-4 max-w-[1500px] mx-auto">
+  <header class="flex items-center gap-3 mb-3">
+    <div class="text-3xl">🌍</div>
+    <div>
+      <h1 class="text-lg sm:text-xl font-extrabold text-slate-900 leading-tight">Pérdidas Ambientales & Biot</h1>
+      <p class="text-xs text-slate-500">Cómo de "aislado" está cada depósito y cuánto calor se escapa hacia el ambiente.</p>
     </div>
+  </header>
 
-    <!-- Toast de Notificación -->
-    <div id="toast" class="fixed bottom-5 right-5 bg-green-600 text-white px-6 py-4 rounded-lg shadow-xl flex items-center gap-3 toast-leave-active z-50">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-        <span class="font-medium">Datos exportados exitosamente al LocalStorage.</span>
-    </div>
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
+    <section id="cards" class="flex flex-col gap-3"></section>
+    <section class="flex flex-col gap-3">
+      <div class="glass rounded-xl border border-slate-200 p-3">
+        <h3 class="text-sm font-bold text-slate-700 mb-1">Área superficial real vs esfera equivalente · m²</h3>
+        <p class="text-[11px] text-slate-400 mb-1">La geometría cilíndrica real puede tener bastante más superficie (más pérdidas).</p>
+        <div class="relative h-40 sm:h-44"><canvas id="ch-area"></canvas></div>
+      </div>
+      <div class="glass rounded-xl border border-slate-200 p-3">
+        <h3 class="text-sm font-bold text-slate-700 mb-1">Pérdidas hacia el ambiente Q_amb(t) · kW</h3>
+        <p class="text-[11px] text-slate-400 mb-1">Negativo = el depósito cede calor al aire · Positivo = lo absorbe</p>
+        <div class="relative h-44 sm:h-52"><canvas id="ch-loss"></canvas></div>
+      </div>
+    </section>
+  </div>
+</div>
 
-    <script>
-        // === Estado de la Aplicación ===
-        const state = {
-            baseData: null,       // Datos importados
-            timeSeries: [],       // Eje X de tiempo
-            streams: [],          // Corrientes con sus propiedades base
-            configs: {},          // Configuraciones interactivas por corriente
-            results: {},          // Resultados calculados (Lc, Bi, Area, Q_amb_profile)
-            charts: {
-                area: null,
-                loss: null
-            }
-        };
+<script src="core/bus.js"></script>
+<script>
+let app1 = null;
+let configs = Thermal.defaultApp3Config();
+let result = null, chArea = null, chLoss = null;
 
-        const T_AMBIENT = 25; // °C
+function biotBadge(Bi){
+  if (Bi < 0.1) return ['bg-green-100 text-green-700 border-green-300','✅ Modelo válido'];
+  if (Bi < 1)  return ['bg-amber-100 text-amber-700 border-amber-300','⚠️ Gradientes moderados'];
+  return ['bg-red-100 text-red-700 border-red-300','⛔ Modelo no válido'];
+}
 
-        // === Inicialización ===
-        document.addEventListener('DOMContentLoaded', () => {
-            loadData();
-        });
+function tankSVG(s, res){
+  // intensidad de ondas según |Q_amb| medio
+  const qAvg = res.Q_amb.reduce((a,b)=>a+Math.abs(b),0)/res.Q_amb.length;
+  const n = Math.max(1, Math.min(3, Math.round(qAvg/300)));
+  let waves = '';
+  for (let i=0;i<n;i++){
+    waves += `<circle cx="34" cy="30" r="16" fill="none" stroke="${s.color}" stroke-width="2" class="wave" style="animation-delay:${i*0.6}s"/>`;
+  }
+  const isCyl = res.geometry === 'cylinder';
+  const shape = isCyl
+    ? `<rect x="22" y="14" width="24" height="34" rx="11" fill="${s.color}22" stroke="${s.color}" stroke-width="2"/>`
+    : `<circle cx="34" cy="30" r="17" fill="${s.color}22" stroke="${s.color}" stroke-width="2"/>`;
+  return `<svg viewBox="0 0 68 60" class="w-16 h-14">${waves}${shape}<text x="34" y="35" font-size="16" text-anchor="middle">${s.icon}</text></svg>`;
+}
 
-        function loadData() {
-            const rawData = localStorage.getItem('suite_thermal_data_enriched');
-            
-            if (!rawData) {
-                document.getElementById('warning-container').classList.remove('hidden');
-                document.getElementById('main-content').classList.add('hidden');
-                return;
-            }
+function buildCards(){
+  const streams = (app1 && app1.streams) || Thermal.computeApp1().streams;
+  const wrap = document.getElementById('cards');
+  wrap.innerHTML = '';
+  streams.forEach(s => {
+    const c = configs[s.id];
+    const res = result ? result.streams.find(r => r.id === s.id) : null;
+    const [bClass, bText] = res ? biotBadge(res.Bi) : ['bg-slate-100 text-slate-500 border-slate-300','--'];
+    const card = document.createElement('div');
+    card.className = 'glass rounded-xl border border-slate-200 p-3';
+    card.style.borderLeft = `5px solid ${s.color}`;
+    card.innerHTML = `
+      <div class="flex items-center gap-3 mb-2">
+        <div id="svg-${s.id}">${res ? tankSVG(s,res) : ''}</div>
+        <div class="flex-1">
+          <h4 class="font-bold text-slate-800 text-sm">${s.name}</h4>
+          <span class="inline-block mt-1 text-[10px] font-bold px-2 py-0.5 rounded border ${bClass}">${bText} · Bi=${res?res.Bi.toFixed(3):'--'}</span>
+        </div>
+      </div>
+      <div class="grid grid-cols-2 gap-x-3 gap-y-2 text-xs">
+        <label class="block">Volumen <b data-d="volume-${s.id}" class="float-right text-teal-700">${c.volume} m³</b>
+          <input type="range" data-id="${s.id}" data-f="volume" min="0.1" max="5" step="0.1" value="${c.volume}" class="w-full">
+        </label>
+        <label class="block">Geometría
+          <select data-id="${s.id}" data-f="geometry" class="w-full mt-0.5 border border-slate-300 rounded px-1 py-1">
+            <option value="cylinder" ${c.geometry==='cylinder'?'selected':''}>Cilindro (L/D=3)</option>
+            <option value="sphere" ${c.geometry==='sphere'?'selected':''}>Esfera</option>
+          </select>
+        </label>
+        <label class="block">Aislamiento h_amb <b data-d="h_amb-${s.id}" class="float-right text-teal-700">${c.h_amb} W/m²K</b>
+          <input type="range" data-id="${s.id}" data-f="h_amb" min="1" max="25" step="0.5" value="${c.h_amb}" class="w-full">
+        </label>
+        <label class="block">Convección h_conv <b data-d="h_conv-${s.id}" class="float-right text-teal-700">${c.h_conv}</b>
+          <input type="range" data-id="${s.id}" data-f="h_conv" min="20" max="1000" step="10" value="${c.h_conv}" class="w-full">
+        </label>
+        <div class="col-span-2 flex justify-between text-[11px] text-slate-500 bg-slate-50 rounded px-2 py-1">
+          <span>Lc = <b id="lc-${s.id}" class="text-slate-700">--</b> m</span>
+          <span>Pérdida = <b id="qa-${s.id}" class="text-slate-700">--</b> kWh/ciclo</span>
+        </div>
+      </div>`;
+    wrap.appendChild(card);
+  });
+  wrap.querySelectorAll('input,select').forEach(el => {
+    el.addEventListener('input', () => {
+      const id = el.dataset.id, f = el.dataset.f;
+      configs[id][f] = (f === 'geometry') ? el.value : parseFloat(el.value);
+      const d = document.querySelector(`[data-d="${f}-${id}"]`);
+      if (d){
+        if (f==='volume') d.textContent = el.value + ' m³';
+        else if (f==='h_amb') d.textContent = el.value + ' W/m²K';
+        else d.textContent = el.value;
+      }
+      recompute();
+    });
+  });
+}
 
-            try {
-                const parsedData = JSON.parse(rawData);
-                initializeState(parsedData);
-            } catch (e) {
-                console.error("Error parseando datos del LocalStorage:", e);
-                alert("Error al leer los datos. El formato JSON no es válido.");
-            }
-        }
+function refreshCardInfo(){
+  result.streams.forEach(r => {
+    const lc = document.getElementById('lc-'+r.id); if (lc) lc.textContent = r.Lc.toFixed(3);
+    const qa = document.getElementById('qa-'+r.id); if (qa) qa.textContent = r.Q_amb_kWh.toFixed(3);
+    const s = Thermal.stationById(r.id);
+    const svg = document.getElementById('svg-'+r.id); if (svg && s) svg.innerHTML = tankSVG(s, r);
+    // badge update
+    const card = lc ? lc.closest('.glass') : null;
+    if (card){
+      const badge = card.querySelector('span.border');
+      if (badge){ const [bc,bt]=biotBadge(r.Bi); badge.className='inline-block mt-1 text-[10px] font-bold px-2 py-0.5 rounded border '+bc; badge.textContent=`${bt} · Bi=${r.Bi.toFixed(3)}`; }
+    }
+  });
+}
 
-        // Para entorno de prueba aislado
-        function injectMockData() {
-            const time = Array.from({length: 120}, (_, i) => i * 10); // 0 a 1200 seg
-            const mock = {
-                timeSeries: time,
-                streams: [
-                    { id: "s1", name: "Corriente Reactivo A", volume: 5.5, temperatureProfile: time.map(t => 85 * Math.exp(-0.001 * t) + 15) },
-                    { id: "s2", name: "Corriente Producto B", volume: 2.0, temperatureProfile: time.map(t => 30 + 40 * (1 - Math.exp(-0.002 * t))) },
-                    { id: "s3", name: "Corriente de Agua", volume: 15.0, temperatureProfile: time.map(t => 20 + 5 * Math.sin(t/100)) }
-                ]
-            };
-            localStorage.setItem('suite_thermal_data_enriched', JSON.stringify(mock));
-            document.getElementById('warning-container').classList.add('hidden');
-            loadData();
-        }
+function initCharts(){
+  chArea = new Chart(document.getElementById('ch-area'), {
+    type:'bar',
+    data:{ labels:[], datasets:[
+      { label:'Geometría real', data:[], backgroundColor:'rgba(13,148,136,.8)' },
+      { label:'Esfera equiv.', data:[], backgroundColor:'rgba(148,163,184,.6)' }
+    ]},
+    options:{ responsive:true, maintainAspectRatio:false, animation:false,
+      plugins:{ legend:{ labels:{ boxWidth:8, font:{size:10} } } },
+      scales:{ y:{ beginAtZero:true, title:{display:true,text:'m²',font:{size:10}}, ticks:{font:{size:9}} }, x:{ ticks:{font:{size:9}} } } }
+  });
+  chLoss = new Chart(document.getElementById('ch-loss'), {
+    type:'line', data:{labels:[],datasets:[]},
+    options:{ responsive:true, maintainAspectRatio:false, animation:false, interaction:{mode:'index',intersect:false},
+      plugins:{ legend:{ labels:{ usePointStyle:true, boxWidth:7, font:{size:10} } } },
+      scales:{ x:{ title:{display:true,text:'Tiempo (s)',font:{size:10}}, ticks:{maxTicksLimit:8,font:{size:9}} },
+               y:{ title:{display:true,text:'kW',font:{size:10}}, ticks:{font:{size:9}}, grid:{ color:c=>c.tick.value===0?'#94a3b8':'#eef2f7' } } } }
+  });
+}
+function updateCharts(){
+  chArea.data.labels = result.streams.map(s => s.name);
+  chArea.data.datasets[0].data = result.streams.map(s => s.A_surf);
+  chArea.data.datasets[1].data = result.streams.map(s => s.A_sphere);
+  chArea.update();
+  const labels = (app1 && app1.time) || result.streams[0].Q_amb.map((_,i)=>i);
+  chLoss.data.labels = labels;
+  chLoss.data.datasets = result.streams.map(s => ({
+    label:s.name, data:s.Q_amb.map(q=>q/1000), borderColor:s.color, backgroundColor:s.color+'22',
+    borderWidth:2, pointRadius:0, tension:.2, fill:true
+  }));
+  chLoss.update();
+}
 
-        function initializeState(data) {
-            state.baseData = data;
-            
-            // Asumimos una estructura general. Adaptar si la App 2 varía.
-            state.timeSeries = data.timeSeries || data.time || Array.from({length: data.streams[0].temperatureProfile.length}, (_, i) => i);
-            state.streams = data.streams || [];
+function recompute(){
+  result = Thermal.computeApp3(app1 || Thermal.computeApp1(), configs, 25);
+  updateCharts(); refreshCardInfo();
+  Thermal.publish(result);
+}
 
-            if(state.streams.length === 0) {
-                alert("No se encontraron corrientes en los datos.");
-                return;
-            }
+let lastSig = null;
+function ensureBuilt(){ if (window.__built) return; window.__built = true; buildCards(); }
 
-            // Inicializar configuraciones por defecto
-            state.streams.forEach(stream => {
-                state.configs[stream.id] = {
-                    k_solid: 1.0,     // 0.1 a 50
-                    h_conv: 200,      // 10 a 1000
-                    geometry: 'sphere', // 'sphere' | 'cylinder'
-                    h_amb: 5.0        // 1 a 25
-                };
-            });
-
-            document.getElementById('main-content').classList.remove('hidden');
-            
-            buildUI();
-            performCalculations();
-            initCharts();
-            updateUI();
-        }
-
-        // === Construcción de Interfaz ===
-        function buildUI() {
-            const container = document.getElementById('streams-container');
-            container.innerHTML = '<h2 class="text-xl font-semibold text-gray-800 px-2 mb-2">Configuración de Depósitos</h2>';
-
-            state.streams.forEach(stream => {
-                const conf = state.configs[stream.id];
-                const cardHtml = `
-                    <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-200 transition-all hover:shadow-md">
-                        <div class="flex justify-between items-start mb-4">
-                            <div>
-                                <h3 class="font-bold text-gray-800 text-lg">${stream.name}</h3>
-                                <p class="text-sm text-gray-500">Volumen: ${stream.volume.toFixed(2)} m³</p>
-                            </div>
-                            <div id="badge-${stream.id}" class="px-3 py-1 rounded-md text-xs font-bold border whitespace-nowrap text-center">
-                                <!-- Badge inyectado por JS -->
-                            </div>
-                        </div>
-
-                        <div class="space-y-4">
-                            <!-- k_solid -->
-                            <div>
-                                <div class="flex justify-between text-sm mb-1">
-                                    <label class="font-medium text-gray-700">Conductividad Material (k_solid_est)</label>
-                                    <span id="val-k-${stream.id}" class="text-blue-600 font-mono">${conf.k_solid} W/m·K</span>
-                                </div>
-                                <input type="range" min="0.1" max="50" step="0.1" value="${conf.k_solid}" 
-                                    oninput="updateConfig('${stream.id}', 'k_solid', parseFloat(this.value))" class="w-full">
-                            </div>
-
-                            <!-- h_conv -->
-                            <div>
-                                <div class="flex justify-between text-sm mb-1">
-                                    <label class="font-medium text-gray-700">Coef. Convección Interno (h_conv_est)</label>
-                                    <span id="val-hconv-${stream.id}" class="text-blue-600 font-mono">${conf.h_conv} W/m²·K</span>
-                                </div>
-                                <input type="range" min="10" max="1000" step="10" value="${conf.h_conv}" 
-                                    oninput="updateConfig('${stream.id}', 'h_conv', parseFloat(this.value))" class="w-full">
-                            </div>
-
-                            <!-- Geometría -->
-                            <div>
-                                <label class="block font-medium text-gray-700 text-sm mb-1">Geometría de Pérdidas</label>
-                                <select onchange="updateConfig('${stream.id}', 'geometry', this.value)" class="w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2">
-                                    <option value="sphere" ${conf.geometry === 'sphere' ? 'selected' : ''}>Esfera Equivalente</option>
-                                    <option value="cylinder" ${conf.geometry === 'cylinder' ? 'selected' : ''}>Cilindro Alargado (L/D = 3)</option>
-                                </select>
-                            </div>
-
-                            <!-- h_amb -->
-                            <div>
-                                <div class="flex justify-between text-sm mb-1">
-                                    <label class="font-medium text-gray-700">Coef. Global Ambiental (h_amb)</label>
-                                    <span id="val-hamb-${stream.id}" class="text-blue-600 font-mono">${conf.h_amb} W/m²·K</span>
-                                </div>
-                                <input type="range" min="1" max="25" step="0.5" value="${conf.h_amb}" 
-                                    oninput="updateConfig('${stream.id}', 'h_amb', parseFloat(this.value))" class="w-full">
-                            </div>
-
-                            <!-- Outputs informativos de la tarjeta -->
-                            <div class="bg-gray-50 p-3 rounded mt-4 text-sm border border-gray-100 flex justify-between">
-                                <span class="text-gray-600">Longitud Característica (Lc):</span>
-                                <span id="val-lc-${stream.id}" class="font-mono font-medium text-gray-800">-- m</span>
-                            </div>
-                        </div>
-                    </div>
-                `;
-                container.insertAdjacentHTML('beforeend', cardHtml);
-            });
-        }
-
-        // === Lógica Matemática y Física ===
-        function updateConfig(streamId, param, value) {
-            state.configs[streamId][param] = value;
-            
-            // Actualizar display numérico si es slider
-            if(param !== 'geometry') {
-                const labelMap = { 'k_solid': 'val-k-', 'h_conv': 'val-hconv-', 'h_amb': 'val-hamb-' };
-                const unitMap = { 'k_solid': 'W/m·K', 'h_conv': 'W/m²·K', 'h_amb': 'W/m²·K' };
-                document.getElementById(`${labelMap[param]}${streamId}`).innerText = `${value} ${unitMap[param]}`;
-            }
-
-            performCalculations();
-            updateUI(); // Actualiza badges, Lc, y gráficos
-        }
-
-        function performCalculations() {
-            state.streams.forEach(stream => {
-                const conf = state.configs[stream.id];
-                const V = stream.volume;
-                
-                // 1. Longitud Característica y Biot (Modelo Esférico Equivalente Interno)
-                // R_eq = ((3 * V) / (4 * pi))^(1/3)
-                const R_eq = Math.pow((3 * V) / (4 * Math.PI), 1/3);
-                const Lc = R_eq / 3;
-                
-                // Bi = (h_conv_est * Lc) / k_solid_est
-                const Bi = (conf.h_conv * Lc) / conf.k_solid;
-
-                // 2. Área Superficial
-                // A_sphere = pi^(1/3) * (6 * V)^(2/3)
-                const A_sphere = Math.pow(Math.PI, 1/3) * Math.pow(6 * V, 2/3);
-                let A_actual = A_sphere;
-
-                if (conf.geometry === 'cylinder') {
-                    // Cilindro L/D = 3 -> D = ((4 * V) / (pi * 3))^(1/3)
-                    const D = Math.pow((4 * V) / (Math.PI * 3), 1/3);
-                    const L = 3 * D;
-                    // A_surf = pi * D * L + 0.5 * pi * D^2
-                    A_actual = (Math.PI * D * L) + (0.5 * Math.PI * Math.pow(D, 2));
-                }
-
-                // 3. Pérdidas Transitorias Q_amb(t) = h_amb * A_surf * (T_ambient - T_stream(t))
-                // Nota: Si T_stream > T_amb, Q_amb será negativo (el tanque pierde calor, el ambiente gana).
-                const Q_profile = stream.temperatureProfile.map(T_s => {
-                    return conf.h_amb * A_actual * (T_AMBIENT - T_s);
-                });
-
-                // Guardar resultados
-                state.results[stream.id] = {
-                    Lc: Lc,
-                    Bi: Bi,
-                    A_sphere: A_sphere,
-                    A_actual: A_actual,
-                    Q_profile: Q_profile
-                };
-            });
-        }
-
-        // === Actualización Visual ===
-        function updateUI() {
-            state.streams.forEach(stream => {
-                const res = state.results[stream.id];
-                
-                // Actualizar texto Lc
-                document.getElementById(`val-lc-${stream.id}`).innerText = `${res.Lc.toFixed(4)} m`;
-
-                // Actualizar Semáforo Biot
-                const badge = document.getElementById(`badge-${stream.id}`);
-                let bClass, bText;
-
-                if (res.Bi < 0.1) {
-                    bClass = 'bg-green-100 text-green-800 border-green-300';
-                    bText = `Bi: ${res.Bi.toFixed(3)} <br> VÁLIDO`;
-                } else if (res.Bi >= 0.1 && res.Bi < 1) {
-                    bClass = 'bg-yellow-100 text-yellow-800 border-yellow-300';
-                    bText = `Bi: ${res.Bi.toFixed(3)} <br> MODERADO`;
-                } else {
-                    bClass = 'bg-red-100 text-red-800 border-red-300';
-                    bText = `Bi: ${res.Bi.toFixed(2)} <br> INVÁLIDO`;
-                }
-
-                badge.className = `px-3 py-1 rounded-md text-xs font-bold border text-center ${bClass}`;
-                badge.innerHTML = bText;
-            });
-
-            updateChartsData();
-        }
-
-        // === Chart.js Configuración ===
-        function initCharts() {
-            // Paleta de colores para las corrientes
-            const colors = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6'];
-
-            // 1. Gráfico de Áreas
-            const ctxArea = document.getElementById('areaChart').getContext('2d');
-            state.charts.area = new Chart(ctxArea, {
-                type: 'bar',
-                data: {
-                    labels: state.streams.map(s => s.name),
-                    datasets: [
-                        {
-                            label: 'Área Modelo Geometría Seleccionada (m²)',
-                            data: [],
-                            backgroundColor: 'rgba(59, 130, 246, 0.8)',
-                            borderColor: 'rgb(59, 130, 246)',
-                            borderWidth: 1
-                        },
-                        {
-                            label: 'Área Modelo Esfera Pura (m²)',
-                            data: [],
-                            backgroundColor: 'rgba(156, 163, 175, 0.5)',
-                            borderColor: 'rgb(156, 163, 175)',
-                            borderWidth: 1
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: { y: { beginAtZero: true, title: { display: true, text: 'Área (m²)' } } },
-                    plugins: { tooltip: { mode: 'index', intersect: false } }
-                }
-            });
-
-            // 2. Gráfico de Pérdidas
-            const ctxLoss = document.getElementById('lossChart').getContext('2d');
-            const lossDatasets = state.streams.map((s, index) => ({
-                label: s.name,
-                data: [],
-                borderColor: colors[index % colors.length],
-                backgroundColor: colors[index % colors.length] + '33', // Transparente para fill
-                borderWidth: 2,
-                pointRadius: 0, // Ocultar puntos para mejor rendimiento en series largas
-                tension: 0.1,
-                fill: true
-            }));
-
-            state.charts.loss = new Chart(ctxLoss, {
-                type: 'line',
-                data: {
-                    labels: state.timeSeries,
-                    datasets: lossDatasets
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    interaction: { mode: 'index', intersect: false },
-                    scales: {
-                        x: { title: { display: true, text: 'Tiempo (s)' } },
-                        y: { 
-                            title: { display: true, text: 'Q_amb (W)' },
-                            // Añadir línea cero para distinguir ganancia/pérdida
-                            grid: { color: (context) => context.tick.value === 0 ? 'rgba(0,0,0,0.8)' : 'rgba(0,0,0,0.1)' }
-                        }
-                    },
-                    plugins: {
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    let label = context.dataset.label || '';
-                                    if (label) label += ': ';
-                                    if (context.parsed.y !== null) {
-                                        label += context.parsed.y.toFixed(2) + ' W';
-                                        // Aclaración contextual
-                                        if(context.parsed.y < 0) label += ' (Calor liberado al ambiente)';
-                                        if(context.parsed.y > 0) label += ' (Calor absorbido del ambiente)';
-                                    }
-                                    return label;
-                                }
-                            }
-                        }
-                    }
-                }
-            });
-        }
-
-        function updateChartsData() {
-            // Actualizar Chart Áreas
-            state.charts.area.data.datasets[0].data = state.streams.map(s => state.results[s.id].A_actual);
-            state.charts.area.data.datasets[1].data = state.streams.map(s => state.results[s.id].A_sphere);
-            state.charts.area.update();
-
-            // Actualizar Chart Pérdidas
-            state.streams.forEach((stream, index) => {
-                state.charts.loss.data.datasets[index].data = state.results[stream.id].Q_profile;
-            });
-            state.charts.loss.update();
-        }
-
-        // === Exportación y UI Auxiliar ===
-        function exportData() {
-            const finalData = {
-                ...state.baseData,
-                ambientAudit: {
-                    t_ambient: T_AMBIENT,
-                    streamsDetails: state.streams.map(s => ({
-                        id: s.id,
-                        name: s.name,
-                        configuration: state.configs[s.id],
-                        calculations: {
-                            biotNumber: state.results[s.id].Bi,
-                            characteristicLength: state.results[s.id].Lc,
-                            actualSurfaceArea: state.results[s.id].A_actual,
-                            isLumpedModelValid: state.results[s.id].Bi < 0.1
-                        },
-                        q_amb_profile_W: state.results[s.id].Q_profile
-                    }))
-                }
-            };
-
-            localStorage.setItem('suite_thermal_data_with_ambient', JSON.stringify(finalData));
-            showToast();
-        }
-
-        function showToast() {
-            const toast = document.getElementById('toast');
-            toast.classList.remove('toast-leave-active', 'hidden');
-            toast.classList.add('toast-enter-active');
-            
-            setTimeout(() => {
-                toast.classList.remove('toast-enter-active');
-                toast.classList.add('toast-leave-active');
-            }, 3000);
-        }
-    </script>
+initCharts();
+Thermal.initApp('app3', (state) => {
+  app1 = state.app1 || Thermal.computeApp1();
+  if (state.app3 && state.app3.streams && !window.__hyd){
+    window.__hyd = true;
+    state.app3.streams.forEach(ss => { if (configs[ss.id]){ ['volume','geometry','k_solid','h_conv','h_amb'].forEach(f=>{ if(ss[f]!=null) configs[ss.id][f]=ss[f]; }); } });
+  }
+  const sig = JSON.stringify(app1.streams.map(s => s.T)) + app1.K;
+  if (sig !== lastSig){ lastSig = sig; recompute(); ensureBuilt(); refreshCardInfo(); }
+  else ensureBuilt();
+});
+</script>
 </body>
 </html>
